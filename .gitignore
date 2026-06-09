@@ -32,8 +32,9 @@ Thumbs.db
 *.session-journal
 
 # PyInstaller
-*.spec
 dist/
+# Keep the project build spec
+!telelistener.spec
 
 # IDE
 .idea/

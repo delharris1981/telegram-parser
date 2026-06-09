@@ -2,11 +2,12 @@ import logging
 from telethon import TelegramClient
 from telethon.errors import FloodWaitError
 import asyncio
+from typing import Optional
 
 import config
 from db.operations import (
     add_monitored_group, get_group_by_telegram_id,
-    add_hit, list_keywords, get_settings,
+    add_hit, list_keywords, get_settings, get_api_config,
 )
 from parser.handlers import has_cyrillic, is_spam_link, find_keyword_match
 from parser.notifications import build_notification_text, send_notification
@@ -14,13 +15,27 @@ from parser.notifications import build_notification_text, send_notification
 logger = logging.getLogger(__name__)
 
 
-def create_client() -> TelegramClient:
-    return TelegramClient(
-        config.SESSION_NAME,
-        config.API_ID,
-        config.API_HASH,
-        proxy=config.PROXY,
-    )
+async def create_client() -> TelegramClient:
+    """Build TelegramClient, preferring DB-stored credentials over env vars."""
+    db_cfg = await get_api_config(config.DB_PATH)
+
+    api_id = (db_cfg["api_id"] if db_cfg and db_cfg["api_id"] else None) or config.API_ID
+    api_hash = (db_cfg["api_hash"] if db_cfg and db_cfg["api_hash"] else None) or config.API_HASH
+    session_name = (db_cfg["session_name"] if db_cfg and db_cfg["session_name"] else None) or config.SESSION_NAME
+
+    proxy: Optional[tuple] = None
+    if db_cfg and db_cfg["proxy_type"] and db_cfg["proxy_host"] and db_cfg["proxy_port"]:
+        proxy = (db_cfg["proxy_type"], db_cfg["proxy_host"], int(db_cfg["proxy_port"]))
+    elif config.PROXY:
+        proxy = config.PROXY
+
+    if not api_id or not api_hash:
+        raise RuntimeError(
+            "Telegram API credentials are not configured. "
+            "Set them in the dashboard (Settings → API Credentials) or via .env."
+        )
+
+    return TelegramClient(session_name, api_id, api_hash, proxy=proxy)
 
 
 async def on_new_message(event, client: TelegramClient) -> None:

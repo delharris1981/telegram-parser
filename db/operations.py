@@ -113,3 +113,28 @@ async def update_settings(db_path: str, enabled: int, destination: str) -> None:
             (enabled, destination),
         )
         await db.commit()
+
+
+async def get_api_config(db_path: str) -> Optional[dict]:
+    return await _fetchone(
+        db_path,
+        "SELECT api_id, api_hash, session_name, proxy_type, proxy_host, proxy_port FROM settings WHERE id=1",
+    )
+
+
+async def update_api_config(
+    db_path: str,
+    api_id: int,
+    api_hash: str,
+    session_name: str,
+    proxy_type: str,
+    proxy_host: str,
+    proxy_port: int,
+) -> None:
+    async with aiosqlite.connect(db_path, timeout=10.0) as db:
+        await db.execute(
+            """UPDATE settings SET api_id=?, api_hash=?, session_name=?,
+               proxy_type=?, proxy_host=?, proxy_port=? WHERE id=1""",
+            (api_id, api_hash, session_name, proxy_type, proxy_host, proxy_port),
+        )
+        await db.commit()

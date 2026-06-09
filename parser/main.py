@@ -2,7 +2,7 @@ import asyncio
 import logging
 import sys
 
-from telethon import events
+from telethon import TelegramClient, events
 from telethon.errors import FloodWaitError
 
 import config
@@ -19,9 +19,8 @@ logger = logging.getLogger(__name__)
 RECONNECT_DELAY = 10
 
 
-async def main() -> None:
-    await init_db(config.DB_PATH)
-    client = create_client()
+async def run_parser_loop(client: TelegramClient) -> None:
+    """Run the message-handler reconnect loop. Assumes DB is already initialised."""
 
     @client.on(events.NewMessage)
     async def handler(event):
@@ -33,20 +32,29 @@ async def main() -> None:
         except Exception as exc:
             logger.exception("Unhandled error in message handler: %s", exc)
 
-    while True:
-        try:
-            logger.info("Connecting to Telegram...")
-            await client.start()
-            logger.info("Parser running. Listening for messages...")
-            await client.run_until_disconnected()
-        except (ConnectionError, TimeoutError, OSError) as exc:
-            logger.error("Network error: %s — reconnecting in %ds", exc, RECONNECT_DELAY)
-            await asyncio.sleep(RECONNECT_DELAY)
-        except KeyboardInterrupt:
-            logger.info("Shutting down.")
-            break
+    try:
+        while True:
+            try:
+                logger.info("Connecting to Telegram...")
+                await client.start()
+                logger.info("Parser running. Listening for messages...")
+                await client.run_until_disconnected()
+            except (ConnectionError, TimeoutError, OSError) as exc:
+                logger.error("Network error: %s — reconnecting in %ds", exc, RECONNECT_DELAY)
+                await asyncio.sleep(RECONNECT_DELAY)
+            except KeyboardInterrupt:
+                logger.info("Shutting down.")
+                break
+    except asyncio.CancelledError:
+        pass
+    finally:
+        await client.disconnect()
 
-    await client.disconnect()
+
+async def main() -> None:
+    await init_db(config.DB_PATH)
+    client = await create_client()
+    await run_parser_loop(client)
 
 
 if __name__ == "__main__":

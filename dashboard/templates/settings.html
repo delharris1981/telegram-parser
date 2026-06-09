@@ -1,35 +1,123 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Notification Settings</h2>
-<div style="max-width:480px;">
+<h2>Settings</h2>
+
+<section style="max-width:520px;background:#fff;padding:20px;border-radius:6px;border:1px solid #ddd;margin-bottom:24px;">
+  <h3 style="margin-top:0;">Telegram API Credentials</h3>
+  <p style="color:#666;font-size:13px;margin-top:0;">
+    Obtain API ID and Hash from
+    <a href="https://my.telegram.org/apps" target="_blank" rel="noopener">my.telegram.org/apps</a>.
+    The parser must be restarted after saving.
+  </p>
+
+  <label style="display:block;margin-bottom:4px;">API ID</label>
+  <input type="number" id="api-id" placeholder="12345678" style="width:260px;">
+  <br><br>
+
+  <label style="display:block;margin-bottom:4px;">API Hash</label>
+  <input type="text" id="api-hash" placeholder="32-character hex string" style="width:320px;">
+  <br><br>
+
+  <label style="display:block;margin-bottom:4px;">Session Name</label>
+  <input type="text" id="session-name" placeholder="telelistener" style="width:220px;">
+  <br><br>
+
+  <details style="margin-bottom:16px;">
+    <summary style="cursor:pointer;font-weight:bold;">Proxy (optional)</summary>
+    <div style="margin-top:12px;">
+      <label style="display:block;margin-bottom:4px;">Proxy Type</label>
+      <select id="proxy-type" style="padding:6px;border:1px solid #ccc;border-radius:4px;width:140px;">
+        <option value="">None</option>
+        <option value="socks5">SOCKS5</option>
+        <option value="http">HTTP</option>
+      </select>
+      <br><br>
+
+      <label style="display:block;margin-bottom:4px;">Proxy Host</label>
+      <input type="text" id="proxy-host" placeholder="127.0.0.1" style="width:220px;">
+      <br><br>
+
+      <label style="display:block;margin-bottom:4px;">Proxy Port</label>
+      <input type="number" id="proxy-port" placeholder="1080" style="width:120px;">
+    </div>
+  </details>
+
+  <button onclick="saveApiConfig()">Save API Config</button>
+  <span id="api-status" style="color:green;margin-left:12px;"></span>
+</section>
+
+<section style="max-width:520px;background:#fff;padding:20px;border-radius:6px;border:1px solid #ddd;">
+  <h3 style="margin-top:0;">Notification Settings</h3>
+
   <label style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
     <input type="checkbox" id="notif-toggle">
     Enable Telegram Notifications
   </label>
-  <label style="display:block;margin-bottom:6px;">Notification Destination:</label>
-  <input type="text" id="notif-dest" placeholder="@handle, user_id, or 'me'">
+
+  <label style="display:block;margin-bottom:6px;">Notification Destination</label>
+  <input type="text" id="notif-dest" placeholder="@handle, user_id, or 'me'" style="width:260px;">
   <br><br>
-  <button onclick="save()">Save</button>
-  <p id="status-msg"></p>
-</div>
+
+  <button onclick="saveNotifs()">Save Notifications</button>
+  <span id="notif-status" style="color:green;margin-left:12px;"></span>
+</section>
+
 <script>
-async function load() {
+async function loadApiConfig() {
+  const r = await fetch('/api/settings/api-config');
+  const s = await r.json();
+  document.getElementById('api-id').value = s.api_id || '';
+  document.getElementById('api-hash').value = s.api_hash || '';
+  document.getElementById('session-name').value = s.session_name || 'telelistener';
+  document.getElementById('proxy-type').value = s.proxy_type || '';
+  document.getElementById('proxy-host').value = s.proxy_host || '';
+  document.getElementById('proxy-port').value = s.proxy_port || '';
+}
+
+async function saveApiConfig() {
+  const body = {
+    api_id: parseInt(document.getElementById('api-id').value) || 0,
+    api_hash: document.getElementById('api-hash').value.trim(),
+    session_name: document.getElementById('session-name').value.trim() || 'telelistener',
+    proxy_type: document.getElementById('proxy-type').value,
+    proxy_host: document.getElementById('proxy-host').value.trim(),
+    proxy_port: parseInt(document.getElementById('proxy-port').value) || 0,
+  };
+  const r = await fetch('/api/settings/api-config', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body),
+  });
+  const el = document.getElementById('api-status');
+  el.textContent = r.ok ? 'Saved! Restart the parser to apply.' : 'Error saving.';
+  el.style.color = r.ok ? 'green' : 'red';
+  setTimeout(() => { el.textContent = ''; }, 4000);
+}
+
+async function loadNotifs() {
   const r = await fetch('/api/settings');
   const s = await r.json();
   document.getElementById('notif-toggle').checked = s.tg_notifications_enabled === 1;
-  document.getElementById('notif-dest').value = s.tg_notification_destination;
+  document.getElementById('notif-dest').value = s.tg_notification_destination || '';
 }
-async function save() {
-  const enabled = document.getElementById('notif-toggle').checked ? 1 : 0;
-  const dest = document.getElementById('notif-dest').value.trim();
-  await fetch('/api/settings', {
+
+async function saveNotifs() {
+  const body = {
+    tg_notifications_enabled: document.getElementById('notif-toggle').checked ? 1 : 0,
+    tg_notification_destination: document.getElementById('notif-dest').value.trim(),
+  };
+  const r = await fetch('/api/settings', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({tg_notifications_enabled: enabled, tg_notification_destination: dest}),
+    body: JSON.stringify(body),
   });
-  document.getElementById('status-msg').textContent = 'Saved!';
-  setTimeout(() => { document.getElementById('status-msg').textContent = ''; }, 2000);
+  const el = document.getElementById('notif-status');
+  el.textContent = r.ok ? 'Saved!' : 'Error saving.';
+  el.style.color = r.ok ? 'green' : 'red';
+  setTimeout(() => { el.textContent = ''; }, 2000);
 }
-load();
+
+loadApiConfig();
+loadNotifs();
 </script>
 {% endblock %}

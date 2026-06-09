@@ -1,4 +1,4 @@
-name: Build and Test
+name: Build and Release
 
 on:
   push:
@@ -32,11 +32,46 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install -r requirements.txt
-      - name: Build parser binary
-        run: pyinstaller --onefile --name telelistener-parser parser/main.py
-      - name: Build dashboard binary
-        run: pyinstaller --onefile --name telelistener-dashboard dashboard/main.py
+      - name: Build combined binary
+        run: pyinstaller telelistener.spec
+      - name: Rename binary (macOS)
+        if: runner.os == 'macOS'
+        run: mv dist/telelistener dist/telelistener-macos
+      - name: Rename binary (Windows)
+        if: runner.os == 'Windows'
+        run: Rename-Item dist\telelistener.exe dist\telelistener-windows.exe
+        shell: pwsh
       - uses: actions/upload-artifact@v4
         with:
-          name: binaries-${{ matrix.os }}
+          name: telelistener-${{ matrix.os }}
           path: dist/
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read version
+        id: version
+        run: echo "tag=v$(cat VERSION).${{ github.run_number }}" >> $GITHUB_OUTPUT
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: List artifacts
+        run: find artifacts/ -type f
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: "TeleListener ${{ steps.version.outputs.tag }}"
+          body_path: CHANGELOG.md
+          files: |
+            artifacts/telelistener-macos-latest/telelistener-macos
+            artifacts/telelistener-windows-latest/telelistener-windows.exe

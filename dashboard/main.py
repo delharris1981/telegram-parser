@@ -1,3 +1,4 @@
+import sys
 import pathlib
 from fastapi import FastAPI, Depends, Request
 from fastapi.responses import HTMLResponse
@@ -7,7 +8,12 @@ from dashboard.auth import require_auth
 from dashboard.routes import hits, keywords, groups
 from dashboard.routes import settings as settings_router
 
-BASE_DIR = pathlib.Path(__file__).parent
+# In a PyInstaller one-file binary, __file__ resolves to the temp extraction dir.
+if getattr(sys, "frozen", False):
+    BASE_DIR = pathlib.Path(sys._MEIPASS) / "dashboard"
+else:
+    BASE_DIR = pathlib.Path(__file__).parent
+
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 app = FastAPI(title="TeleListener Dashboard")
