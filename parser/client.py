@@ -50,6 +50,9 @@ async def on_new_message(event, client: TelegramClient) -> None:
 
     await add_monitored_group(config.DB_PATH, telegram_id=telegram_id, title=title, handle=handle)
     group = await get_group_by_telegram_id(config.DB_PATH, telegram_id)
+    if group is None:
+        logger.error("group not found after add_monitored_group for telegram_id=%s", telegram_id)
+        return
 
     username = getattr(sender, "username", None)
     first_name = getattr(sender, "first_name", None)
