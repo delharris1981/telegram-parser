@@ -99,7 +99,7 @@ async def list_hits(db_path: str, limit: int = 100) -> list[dict]:
 
 # --- Settings ---
 
-async def get_settings(db_path: str) -> dict:
+async def get_settings(db_path: str) -> Optional[dict]:
     return await _fetchone(
         db_path,
         "SELECT id, tg_notifications_enabled, tg_notification_destination FROM settings WHERE id=1",

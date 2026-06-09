@@ -1,4 +1,5 @@
 import pytest
+import aiosqlite
 from db.operations import (
     add_keyword, list_keywords, delete_keyword,
     add_monitored_group, list_monitored_groups, get_group_by_telegram_id,
@@ -68,6 +69,23 @@ async def test_add_hit_and_list(test_db):
     assert len(hits) == 1
     assert hits[0]["username"] == "ivan"
     assert hits[0]["keyword_matched"] == "купить"
+    assert hits[0]["group_title"] == "Источник"
+
+
+@pytest.mark.asyncio
+async def test_list_hits_with_orphaned_group_id(test_db):
+    async with aiosqlite.connect(test_db) as db:
+        await db.execute(
+            """INSERT INTO parsed_hits
+               (group_id, sender_id, username, first_name, original_comment, keyword_matched)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (9999, 42, "orphan_user", "Orphan", "some text", "купить"),
+        )
+        await db.commit()
+    hits = await list_hits(test_db, limit=10)
+    assert len(hits) == 1
+    assert hits[0]["group_title"] is None
+    assert hits[0]["username"] == "orphan_user"
 
 
 @pytest.mark.asyncio
