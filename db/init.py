@@ -1,3 +1,4 @@
+import pathlib
 import aiosqlite
 
 SCHEMA = """
@@ -57,6 +58,7 @@ _MIGRATIONS = [
 
 
 async def init_db(db_path: str) -> None:
+    pathlib.Path(db_path).parent.mkdir(parents=True, exist_ok=True)
     async with aiosqlite.connect(db_path, timeout=10.0) as db:
         await db.executescript(SCHEMA)
         await db.commit()

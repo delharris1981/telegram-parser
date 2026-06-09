@@ -1,4 +1,6 @@
 import os
+import sys
+import pathlib
 
 API_ID = int(os.getenv("TELEGRAM_API_ID", "0"))
 API_HASH = os.getenv("TELEGRAM_API_HASH", "")
@@ -14,7 +16,15 @@ if not _raw_password or _raw_password == "changeme":
         stacklevel=2,
     )
 DASHBOARD_PASSWORD = _raw_password or "changeme"
-DB_PATH = os.getenv("DB_PATH", "db/telelistener.db")
+
+# When running as a frozen binary, store the database next to the executable
+# so the user doesn't need to worry about the working directory.
+if "DB_PATH" in os.environ:
+    DB_PATH = os.environ["DB_PATH"]
+elif getattr(sys, "frozen", False):
+    DB_PATH = str(pathlib.Path(sys.executable).parent / "db" / "telelistener.db")
+else:
+    DB_PATH = "db/telelistener.db"
 
 _proxy_type = os.getenv("PROXY_TYPE", "").lower()
 _proxy_host = os.getenv("PROXY_HOST", "")
