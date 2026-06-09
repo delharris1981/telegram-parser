@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+  parser:
+    build:
+      context: .
+      dockerfile: Dockerfile.parser
+    env_file: .env
+    volumes:
+      - db_data:/app/db
+    restart: unless-stopped
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    env_file: .env
+    volumes:
+      - db_data:/app/db
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    depends_on:
+      - parser
+
+volumes:
+  db_data:
