@@ -44,6 +44,15 @@ CREATE TABLE IF NOT EXISTS settings (
 INSERT OR IGNORE INTO settings (id, tg_notifications_enabled, tg_notification_destination,
     api_id, api_hash, session_name, proxy_type, proxy_host, proxy_port)
 VALUES (1, 0, 'me', 0, '', 'telelistener', '', '', 0);
+
+CREATE TABLE IF NOT EXISTS joined_groups (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    telegram_id INTEGER NOT NULL UNIQUE,
+    title TEXT,
+    handle TEXT,
+    member_count INTEGER,
+    joined_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
 """
 
 # Applied once to existing databases that predate the API-config columns.

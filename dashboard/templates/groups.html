@@ -3,28 +3,115 @@
 
 <div class="page-hd">
   <div class="page-title">Groups</div>
-  <div class="page-sub">Telegram groups the parser has found keyword matches in. Groups are added automatically.</div>
+  <div class="page-sub">Search for public Telegram groups to monitor, join them with one click, and track keyword hits per group.</div>
 </div>
 
+<!-- ── Search ─────────────────────────────────────────────────── -->
+<div class="card" style="margin-bottom:20px;">
+  <div class="card-head"><span class="card-title">Find Public Groups</span></div>
+  <div class="card-body">
+    <div style="display:flex;gap:10px;margin-bottom:16px;">
+      <input type="text" id="search-q" placeholder="e.g. купить квартира, недвижимость Москва…"
+             style="flex:1;" onkeydown="if(event.key==='Enter')doSearch()">
+      <button class="btn btn-primary" onclick="doSearch()" id="search-btn">Search</button>
+    </div>
+    <div id="search-results"></div>
+  </div>
+</div>
+
+<!-- ── Joined groups ──────────────────────────────────────────── -->
+<div class="card" style="margin-bottom:20px;">
+  <div class="card-head">
+    <span class="card-title">Joined Groups</span>
+    <span class="badge badge-blue" id="joined-count">0</span>
+  </div>
+  <div class="tbl-wrap" id="joined-wrap">
+    <div class="empty"><div class="empty-icon">📡</div><div class="empty-msg">Loading…</div></div>
+  </div>
+</div>
+
+<!-- ── Keyword hit groups ─────────────────────────────────────── -->
 <div class="card">
   <div class="card-head">
-    <span class="card-title">Monitored Groups</span>
-    <span class="badge badge-green" id="grp-count">0</span>
+    <span class="card-title">Groups with Keyword Hits</span>
+    <span class="badge badge-green" id="hit-count">0</span>
   </div>
-  <div class="tbl-wrap" id="grp-wrap">
+  <div class="tbl-wrap" id="hit-wrap">
     <div class="empty"><div class="empty-icon">📡</div><div class="empty-msg">Loading…</div></div>
   </div>
 </div>
 
 <script>
-fetch('/api/groups').then(r => r.json()).then(gs => {
-  document.getElementById('grp-count').textContent = gs.length;
-  const wrap = document.getElementById('grp-wrap');
+// ── Search ────────────────────────────────────────────────────────
+async function doSearch() {
+  const q = document.getElementById('search-q').value.trim();
+  if (!q) return;
+  const btn = document.getElementById('search-btn');
+  btn.textContent = 'Searching…'; btn.disabled = true;
+  const el = document.getElementById('search-results');
+
+  try {
+    const r = await fetch('/api/groups/search?q=' + encodeURIComponent(q));
+    if (r.status === 503) {
+      el.innerHTML = `<p class="text-muted text-sm" style="color:var(--danger);">
+        Parser not connected — save API credentials in <a class="link" href="/settings">Settings</a> first.
+      </p>`;
+      return;
+    }
+    const groups = await r.json();
+    if (!groups.length) {
+      el.innerHTML = '<p class="text-muted text-sm">No public groups found for that query.</p>';
+      return;
+    }
+    el.innerHTML = `<table>
+      <thead><tr><th>Name</th><th>Handle</th><th>Members</th><th>Type</th><th></th></tr></thead>
+      <tbody>
+        ${groups.map(g => `<tr id="sr-${g.telegram_id}">
+          <td class="fw-600">${esc(g.title)}</td>
+          <td><a class="link" href="https://t.me/${g.handle}" target="_blank">@${g.handle}</a></td>
+          <td class="text-muted text-sm">${g.member_count ? g.member_count.toLocaleString() : '—'}</td>
+          <td><span class="badge ${g.is_channel ? 'badge-slate' : 'badge-blue'}">${g.is_channel ? 'Channel' : 'Group'}</span></td>
+          <td><button class="btn btn-primary btn-sm" onclick="joinGroup('${g.handle}','${esc(g.title)}',${g.telegram_id},${g.member_count||0},this)">Join</button></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  } catch(e) {
+    el.innerHTML = `<p style="color:var(--danger);" class="text-sm">Error: ${e.message}</p>`;
+  } finally {
+    btn.textContent = 'Search'; btn.disabled = false;
+  }
+}
+
+async function joinGroup(handle, title, telegram_id, member_count, btn) {
+  btn.textContent = 'Joining…'; btn.disabled = true;
+  const r = await fetch('/api/groups/join', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({handle, title, telegram_id, member_count}),
+  });
+  if (r.ok) {
+    toast('Joined ' + title);
+    btn.textContent = '✓ Joined';
+    btn.className = 'btn btn-ghost btn-sm';
+    loadJoined();
+  } else {
+    const err = await r.json().catch(() => ({}));
+    toast((err.detail || 'Failed to join'), false);
+    btn.textContent = 'Join'; btn.disabled = false;
+  }
+}
+
+// ── Joined groups ─────────────────────────────────────────────────
+async function loadJoined() {
+  const r = await fetch('/api/groups/joined');
+  const gs = await r.json();
+  document.getElementById('joined-count').textContent = gs.length;
+  const wrap = document.getElementById('joined-wrap');
 
   if (!gs.length) {
     wrap.innerHTML = `<div class="empty">
-      <div class="empty-icon">👥</div>
-      <div class="empty-msg">No groups yet. They appear here automatically once the parser finds a keyword match in a group.</div>
+      <div class="empty-icon">🔍</div>
+      <div class="empty-msg">No groups joined yet. Use the search above to find and join public groups.</div>
     </div>`;
     return;
   }
@@ -33,11 +120,61 @@ fetch('/api/groups').then(r => r.json()).then(gs => {
     const handle = g.handle
       ? `<a class="link" href="https://t.me/${g.handle}" target="_blank">@${g.handle}</a>`
       : '<span class="text-muted">—</span>';
-    const title = g.title
-      ? `<span class="fw-600">${g.title}</span>`
-      : '<span class="text-muted">Unnamed group</span>';
+    const hits = g.hit_count > 0
+      ? `<span class="badge badge-green">${g.hit_count} hit${g.hit_count === 1 ? '' : 's'}</span>`
+      : '<span class="text-muted text-xs">no hits yet</span>';
     return `<tr>
-      <td>${title}</td>
+      <td class="fw-600">${esc(g.title || 'Unknown')}</td>
+      <td>${handle}</td>
+      <td class="text-muted text-sm">${g.member_count ? g.member_count.toLocaleString() : '—'}</td>
+      <td>${hits}</td>
+      <td class="text-muted text-xs" style="white-space:nowrap;">${fmt(g.joined_at)}</td>
+      <td>
+        <button class="btn btn-danger btn-sm" onclick="leaveGroup(${g.id},'${esc(g.title||'')}',this)">Leave</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `<table>
+    <thead><tr>
+      <th>Name</th><th>Handle</th><th>Members</th><th>Hits</th><th>Joined</th><th></th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+async function leaveGroup(id, title, btn) {
+  if (!confirm('Leave "' + title + '"? The parser will stop monitoring this group.')) return;
+  btn.textContent = 'Leaving…'; btn.disabled = true;
+  const r = await fetch('/api/groups/joined/' + id, {method: 'DELETE'});
+  if (r.ok) { toast('Left ' + title); loadJoined(); }
+  else {
+    const err = await r.json().catch(() => ({}));
+    toast(err.detail || 'Failed to leave', false);
+    btn.textContent = 'Leave'; btn.disabled = false;
+  }
+}
+
+// ── Keyword hit groups ────────────────────────────────────────────
+async function loadHitGroups() {
+  const gs = await fetch('/api/groups').then(r => r.json());
+  document.getElementById('hit-count').textContent = gs.length;
+  const wrap = document.getElementById('hit-wrap');
+
+  if (!gs.length) {
+    wrap.innerHTML = `<div class="empty">
+      <div class="empty-icon">📊</div>
+      <div class="empty-msg">Keyword hit groups appear here automatically once the parser finds a match.</div>
+    </div>`;
+    return;
+  }
+
+  const rows = gs.map(g => {
+    const handle = g.handle
+      ? `<a class="link" href="https://t.me/${g.handle}" target="_blank">@${g.handle}</a>`
+      : '<span class="text-muted">—</span>';
+    return `<tr>
+      <td class="fw-600">${esc(g.title || 'Unknown')}</td>
       <td>${handle}</td>
       <td class="text-muted text-xs" style="font-family:monospace;">${g.telegram_id}</td>
       <td class="text-muted text-xs" style="white-space:nowrap;">${fmt(g.joined_at)}</td>
@@ -46,10 +183,17 @@ fetch('/api/groups').then(r => r.json()).then(gs => {
 
   wrap.innerHTML = `<table>
     <thead><tr>
-      <th>Title</th><th>Handle</th><th>Telegram ID</th><th>First Seen</th>
+      <th>Title</th><th>Handle</th><th>Telegram ID</th><th>First Hit</th>
     </tr></thead>
     <tbody>${rows}</tbody>
   </table>`;
-});
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+loadJoined();
+loadHitGroups();
 </script>
 {% endblock %}

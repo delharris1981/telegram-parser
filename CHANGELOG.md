@@ -4,6 +4,20 @@ All notable changes to TeleListener are documented here.
 
 ## [Unreleased]
 
+## [1.3] – 2026-06-09
+
+### Added
+- **Group search & auto-join** – the Groups page now has a search bar that queries the Telegram API for public groups matching a term. Results show the group name, handle, member count, and type (Group/Channel). One-click Join adds the group to the monitoring list and the account joins it immediately.
+- **Leave groups** – joined groups show a Leave button that makes the account leave the Telegram group and removes it from the tracking list.
+- **Keyword hit counter** – each joined group displays how many keyword matches have been found inside it.
+- **`joined_groups` DB table** – tracks groups the app has joined, independent of the `monitored_groups` (keyword-hit) table.
+- **`state.py`** – shared module exposing the live `TelegramClient` to dashboard routes so search/join/leave can be called without restarting.
+- **New API routes**: `GET /api/groups/search`, `POST /api/groups/join`, `GET /api/groups/joined`, `DELETE /api/groups/joined/{id}`.
+
+### Changed
+- `parser/main.py`: sets `state.tg_client` once connected; clears it on disconnect or error so the dashboard can reflect live connection status.
+- `groups.html`: redesigned into three sections — Find Public Groups (search), Joined Groups (app-managed with Leave), Groups with Keyword Hits (auto-populated).
+
 ## [1.2] – 2026-06-09
 
 ### Added

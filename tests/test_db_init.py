@@ -22,7 +22,7 @@ async def test_schema_tables_created(tmp_path):
             "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
         )
         tables = {row[0] for row in await cursor.fetchall()}
-    assert tables == {"keywords", "monitored_groups", "parsed_hits", "settings"}
+    assert tables == {"keywords", "monitored_groups", "parsed_hits", "settings", "joined_groups"}
 
 
 @pytest.mark.asyncio

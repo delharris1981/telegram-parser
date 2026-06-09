@@ -6,6 +6,7 @@ from telethon import events
 from telethon.errors import FloodWaitError
 
 import config
+import state
 from db.init import init_db
 from parser.client import create_client, on_new_message
 
@@ -59,9 +60,11 @@ async def run_parser_loop() -> None:
                 try:
                     logger.info("Connecting to Telegram...")
                     await client.start()
+                    state.tg_client = client  # expose to dashboard routes
                     logger.info("Parser running. Listening for messages...")
                     await client.run_until_disconnected()
                 except (ConnectionError, TimeoutError, OSError) as exc:
+                    state.tg_client = None
                     logger.error("Network error: %s — reconnecting in %ds", exc, RECONNECT_DELAY)
                     await asyncio.sleep(RECONNECT_DELAY)
                 except KeyboardInterrupt:
@@ -70,6 +73,7 @@ async def run_parser_loop() -> None:
         except asyncio.CancelledError:
             pass
         finally:
+            state.tg_client = None
             await client.disconnect()
         return
 

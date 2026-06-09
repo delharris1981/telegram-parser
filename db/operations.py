@@ -42,6 +42,41 @@ async def delete_keyword(db_path: str, keyword_id: int) -> None:
         await db.commit()
 
 
+# --- Joined Groups (app-managed, searchable from dashboard) ---
+
+async def add_joined_group(
+    db_path: str, telegram_id: int, title: Optional[str], handle: Optional[str], member_count: Optional[int]
+) -> None:
+    async with aiosqlite.connect(db_path, timeout=10.0) as db:
+        await db.execute(
+            """INSERT INTO joined_groups (telegram_id, title, handle, member_count)
+               VALUES (?, ?, ?, ?)
+               ON CONFLICT(telegram_id) DO UPDATE SET title=excluded.title,
+               handle=excluded.handle, member_count=excluded.member_count""",
+            (telegram_id, title, handle, member_count),
+        )
+        await db.commit()
+
+
+async def list_joined_groups(db_path: str) -> list[dict]:
+    return await _fetchall(
+        db_path,
+        """SELECT jg.id, jg.telegram_id, jg.title, jg.handle, jg.member_count,
+                  jg.joined_at, COUNT(ph.id) AS hit_count
+           FROM joined_groups jg
+           LEFT JOIN monitored_groups mg ON mg.telegram_id = jg.telegram_id
+           LEFT JOIN parsed_hits ph ON ph.group_id = mg.id
+           GROUP BY jg.id
+           ORDER BY jg.joined_at DESC""",
+    )
+
+
+async def remove_joined_group(db_path: str, joined_group_id: int) -> None:
+    async with aiosqlite.connect(db_path, timeout=10.0) as db:
+        await db.execute("DELETE FROM joined_groups WHERE id=?", (joined_group_id,))
+        await db.commit()
+
+
 # --- Monitored Groups ---
 
 async def add_monitored_group(
