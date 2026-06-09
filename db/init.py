@@ -38,12 +38,17 @@ CREATE TABLE IF NOT EXISTS settings (
     session_name TEXT NOT NULL DEFAULT 'telelistener',
     proxy_type TEXT NOT NULL DEFAULT '',
     proxy_host TEXT NOT NULL DEFAULT '',
-    proxy_port INTEGER NOT NULL DEFAULT 0
+    proxy_port INTEGER NOT NULL DEFAULT 0,
+    auto_discovery_enabled INTEGER NOT NULL DEFAULT 0,
+    auto_discovery_min_members INTEGER NOT NULL DEFAULT 500,
+    auto_discovery_interval_hours INTEGER NOT NULL DEFAULT 6,
+    auto_discovery_last_run DATETIME
 );
 
 INSERT OR IGNORE INTO settings (id, tg_notifications_enabled, tg_notification_destination,
-    api_id, api_hash, session_name, proxy_type, proxy_host, proxy_port)
-VALUES (1, 0, 'me', 0, '', 'telelistener', '', '', 0);
+    api_id, api_hash, session_name, proxy_type, proxy_host, proxy_port,
+    auto_discovery_enabled, auto_discovery_min_members, auto_discovery_interval_hours)
+VALUES (1, 0, 'me', 0, '', 'telelistener', '', '', 0, 0, 500, 6);
 
 CREATE TABLE IF NOT EXISTS joined_groups (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -55,7 +60,7 @@ CREATE TABLE IF NOT EXISTS joined_groups (
 );
 """
 
-# Applied once to existing databases that predate the API-config columns.
+# Applied once to existing databases that predate newer columns.
 _MIGRATIONS = [
     "ALTER TABLE settings ADD COLUMN api_id INTEGER NOT NULL DEFAULT 0",
     "ALTER TABLE settings ADD COLUMN api_hash TEXT NOT NULL DEFAULT ''",
@@ -63,6 +68,10 @@ _MIGRATIONS = [
     "ALTER TABLE settings ADD COLUMN proxy_type TEXT NOT NULL DEFAULT ''",
     "ALTER TABLE settings ADD COLUMN proxy_host TEXT NOT NULL DEFAULT ''",
     "ALTER TABLE settings ADD COLUMN proxy_port INTEGER NOT NULL DEFAULT 0",
+    "ALTER TABLE settings ADD COLUMN auto_discovery_enabled INTEGER NOT NULL DEFAULT 0",
+    "ALTER TABLE settings ADD COLUMN auto_discovery_min_members INTEGER NOT NULL DEFAULT 500",
+    "ALTER TABLE settings ADD COLUMN auto_discovery_interval_hours INTEGER NOT NULL DEFAULT 6",
+    "ALTER TABLE settings ADD COLUMN auto_discovery_last_run DATETIME",
 ]
 
 

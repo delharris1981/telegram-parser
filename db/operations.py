@@ -153,6 +153,49 @@ async def list_hits(db_path: str, limit: int = 100) -> list[dict]:
     )
 
 
+# --- Auto-discovery settings ---
+
+async def get_auto_discovery_settings(db_path: str) -> dict:
+    row = await _fetchone(
+        db_path,
+        "SELECT auto_discovery_enabled, auto_discovery_min_members, "
+        "auto_discovery_interval_hours, auto_discovery_last_run FROM settings WHERE id=1",
+    )
+    if row is None:
+        return {
+            "auto_discovery_enabled": 0,
+            "auto_discovery_min_members": 500,
+            "auto_discovery_interval_hours": 6,
+            "auto_discovery_last_run": None,
+        }
+    return row
+
+
+async def update_auto_discovery_settings(
+    db_path: str, enabled: int, min_members: int, interval_hours: int
+) -> None:
+    async with aiosqlite.connect(db_path, timeout=10.0) as db:
+        await db.execute(
+            "UPDATE settings SET auto_discovery_enabled=?, auto_discovery_min_members=?, "
+            "auto_discovery_interval_hours=? WHERE id=1",
+            (enabled, min_members, interval_hours),
+        )
+        await db.commit()
+
+
+async def set_auto_discovery_last_run(db_path: str) -> None:
+    async with aiosqlite.connect(db_path, timeout=10.0) as db:
+        await db.execute(
+            "UPDATE settings SET auto_discovery_last_run=CURRENT_TIMESTAMP WHERE id=1"
+        )
+        await db.commit()
+
+
+async def list_joined_group_telegram_ids(db_path: str) -> set:
+    rows = await _fetchall(db_path, "SELECT telegram_id FROM joined_groups")
+    return {r["telegram_id"] for r in rows}
+
+
 # --- Settings ---
 
 async def get_settings(db_path: str) -> Optional[dict]:

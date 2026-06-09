@@ -8,6 +8,11 @@ from telethon.errors import FloodWaitError
 import config
 import state
 from db.init import init_db
+from db.operations import (
+    get_auto_discovery_settings, list_keywords,
+    list_joined_group_telegram_ids, add_joined_group, set_auto_discovery_last_run,
+)
+from parser.auto_join import join_groups_with_flood_protection, is_russian_group
 from parser.client import create_client, on_new_message
 
 logging.basicConfig(
@@ -19,6 +24,75 @@ logger = logging.getLogger(__name__)
 
 RECONNECT_DELAY = 10
 CREDENTIALS_RETRY = 30
+DISCOVERY_IDLE_CHECK = 300  # seconds to wait when disabled or no keywords
+
+
+async def run_auto_discovery(client) -> None:
+    """Periodically search Telegram for Russian public groups matching configured keywords."""
+    logger.info("Auto-discovery task started.")
+    while True:
+        try:
+            settings = await get_auto_discovery_settings(config.DB_PATH)
+            if not settings["auto_discovery_enabled"]:
+                await asyncio.sleep(DISCOVERY_IDLE_CHECK)
+                continue
+
+            keywords = await list_keywords(config.DB_PATH)
+            if not keywords:
+                await asyncio.sleep(DISCOVERY_IDLE_CHECK)
+                continue
+
+            min_members = settings["auto_discovery_min_members"] or 0
+            existing_ids = await list_joined_group_telegram_ids(config.DB_PATH)
+            candidates: dict[int, dict] = {}
+
+            from telethon.tl.functions.contacts import SearchRequest
+            for kw in keywords:
+                try:
+                    result = await client(SearchRequest(q=kw["phrase"], limit=25))
+                    for chat in result.chats:
+                        username = getattr(chat, "username", None)
+                        if not username:
+                            continue
+                        tid = chat.id
+                        if tid in existing_ids or tid in candidates:
+                            continue
+                        title = getattr(chat, "title", "") or ""
+                        member_count = getattr(chat, "participants_count", 0) or 0
+                        if member_count < min_members:
+                            continue
+                        if not is_russian_group(title, ""):
+                            continue
+                        candidates[tid] = {
+                            "handle": username,
+                            "title": title,
+                            "member_count": member_count,
+                        }
+                except Exception as exc:
+                    logger.warning("Auto-discovery search error for %r: %s", kw["phrase"], exc)
+
+            if candidates:
+                logger.info("Auto-discovery: found %d new group(s), joining…", len(candidates))
+                handles = [c["handle"] for c in candidates.values()]
+                await join_groups_with_flood_protection(client, handles)
+                for tid, info in candidates.items():
+                    await add_joined_group(
+                        config.DB_PATH, tid, info["title"], info["handle"], info["member_count"]
+                    )
+            else:
+                logger.info("Auto-discovery: no new groups found this run.")
+
+            await set_auto_discovery_last_run(config.DB_PATH)
+
+            interval_secs = (settings["auto_discovery_interval_hours"] or 6) * 3600
+            await asyncio.sleep(interval_secs)
+
+        except asyncio.CancelledError:
+            logger.info("Auto-discovery task cancelled.")
+            raise
+        except Exception as exc:
+            logger.exception("Auto-discovery unexpected error: %s", exc)
+            await asyncio.sleep(DISCOVERY_IDLE_CHECK)
 
 
 async def run_parser_loop() -> None:
@@ -62,7 +136,15 @@ async def run_parser_loop() -> None:
                     await client.start()
                     state.tg_client = client  # expose to dashboard routes
                     logger.info("Parser running. Listening for messages...")
-                    await client.run_until_disconnected()
+                    discovery_task = asyncio.create_task(run_auto_discovery(client))
+                    try:
+                        await client.run_until_disconnected()
+                    finally:
+                        discovery_task.cancel()
+                        try:
+                            await discovery_task
+                        except asyncio.CancelledError:
+                            pass
                 except (ConnectionError, TimeoutError, OSError) as exc:
                     state.tg_client = None
                     logger.error("Network error: %s — reconnecting in %ds", exc, RECONNECT_DELAY)

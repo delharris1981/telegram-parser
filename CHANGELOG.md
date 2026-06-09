@@ -4,6 +4,18 @@ All notable changes to TeleListener are documented here.
 
 ## [Unreleased]
 
+## [1.4] – 2026-06-09
+
+### Added
+- **Automatic group discovery** – the parser now runs a background task that periodically searches Telegram for public groups matching the configured keywords. Discovered Russian-language groups (detected via Cyrillic title check) above a configurable member-count threshold are joined automatically using flood-safe delays (60–300 s between each join).
+- **Auto-Discovery settings card** – the Settings page has a new "Auto-Discovery" section with an enable toggle, minimum member count field, and search interval (hours). A "Last ran" timestamp updates after each run.
+- **New API routes**: `GET /api/settings/auto-discovery`, `POST /api/settings/auto-discovery`.
+- **New DB columns** on `settings`: `auto_discovery_enabled`, `auto_discovery_min_members`, `auto_discovery_interval_hours`, `auto_discovery_last_run` — applied via migration to existing databases.
+
+### Changed
+- `parser/main.py`: launches `run_auto_discovery(client)` as a concurrent asyncio task after `client.start()`; cancels it cleanly on disconnect.
+- `db/operations.py`: added `get_auto_discovery_settings`, `update_auto_discovery_settings`, `set_auto_discovery_last_run`, `list_joined_group_telegram_ids`.
+
 ## [1.3] – 2026-06-09
 
 ### Added

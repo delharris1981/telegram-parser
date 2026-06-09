@@ -65,6 +65,47 @@
     </div>
   </div>
 
+  <!-- Auto-Discovery -->
+  <div class="card">
+    <div class="card-head"><span class="card-title">Auto-Discovery</span></div>
+    <div class="card-body">
+      <div class="form-group">
+        <label>Enable Automatic Group Discovery</label>
+        <div class="toggle-wrap" style="margin-top:6px;">
+          <label class="toggle">
+            <input type="checkbox" id="disc-toggle" onchange="updateDiscToggleLabel()">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+          <span id="disc-toggle-lbl" class="text-sm text-muted">Disabled</span>
+        </div>
+        <div class="form-hint">When enabled, the app searches Telegram using your keywords and automatically joins matching Russian public groups.</div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="disc-min-members">Minimum Members</label>
+          <input type="number" id="disc-min-members" placeholder="500" min="0">
+          <div class="form-hint">Skip groups with fewer members than this.</div>
+        </div>
+        <div class="form-group">
+          <label for="disc-interval">Interval (hours)</label>
+          <input type="number" id="disc-interval" placeholder="6" min="1" step="1">
+          <div class="form-hint">How often to run discovery.</div>
+        </div>
+      </div>
+
+      <div class="form-hint" style="margin-bottom:18px;" id="disc-last-run-wrap">
+        Last ran: <span id="disc-last-run" class="text-muted">Never</span>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="btn btn-primary" onclick="saveAutoDiscovery()">Save Auto-Discovery</button>
+        <span id="disc-msg" class="text-sm"></span>
+      </div>
+    </div>
+  </div>
+
   <!-- Notifications -->
   <div class="card">
     <div class="card-head"><span class="card-title">Notifications</span></div>
@@ -160,7 +201,39 @@ async function saveNotifs() {
   setMsg('notif-msg', r.ok ? 'Saved!' : 'Error saving', r.ok);
 }
 
+function updateDiscToggleLabel() {
+  const on = document.getElementById('disc-toggle').checked;
+  const lbl = document.getElementById('disc-toggle-lbl');
+  lbl.textContent = on ? 'Enabled' : 'Disabled';
+  lbl.style.color = on ? 'var(--success)' : 'var(--muted)';
+}
+
+async function loadAutoDiscovery() {
+  const s = await fetch('/api/settings/auto-discovery').then(r => r.json());
+  document.getElementById('disc-toggle').checked = s.auto_discovery_enabled === 1;
+  document.getElementById('disc-min-members').value = s.auto_discovery_min_members ?? 500;
+  document.getElementById('disc-interval').value    = s.auto_discovery_interval_hours ?? 6;
+  document.getElementById('disc-last-run').textContent =
+    s.auto_discovery_last_run ? fmt(s.auto_discovery_last_run) : 'Never';
+  updateDiscToggleLabel();
+}
+
+async function saveAutoDiscovery() {
+  const body = {
+    auto_discovery_enabled:        document.getElementById('disc-toggle').checked ? 1 : 0,
+    auto_discovery_min_members:    parseInt(document.getElementById('disc-min-members').value) || 500,
+    auto_discovery_interval_hours: parseInt(document.getElementById('disc-interval').value) || 6,
+  };
+  const r = await fetch('/api/settings/auto-discovery', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body),
+  });
+  setMsg('disc-msg', r.ok ? 'Saved!' : 'Error saving', r.ok);
+}
+
 loadApiConfig();
 loadNotifs();
+loadAutoDiscovery();
 </script>
 {% endblock %}

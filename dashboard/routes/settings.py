@@ -1,7 +1,10 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
 import config
-from db.operations import get_settings, update_settings, get_api_config, update_api_config
+from db.operations import (
+    get_settings, update_settings, get_api_config, update_api_config,
+    get_auto_discovery_settings, update_auto_discovery_settings,
+)
 
 router = APIRouter()
 
@@ -18,6 +21,12 @@ class ApiConfigIn(BaseModel):
     proxy_type: str
     proxy_host: str
     proxy_port: int
+
+
+class AutoDiscoveryIn(BaseModel):
+    auto_discovery_enabled: int
+    auto_discovery_min_members: int
+    auto_discovery_interval_hours: int
 
 
 @router.get("/api/settings")
@@ -52,5 +61,21 @@ async def write_api_config(body: ApiConfigIn):
         body.proxy_type,
         body.proxy_host,
         body.proxy_port,
+    )
+    return {"status": "ok"}
+
+
+@router.get("/api/settings/auto-discovery")
+async def read_auto_discovery():
+    return await get_auto_discovery_settings(config.DB_PATH)
+
+
+@router.post("/api/settings/auto-discovery")
+async def write_auto_discovery(body: AutoDiscoveryIn):
+    await update_auto_discovery_settings(
+        config.DB_PATH,
+        body.auto_discovery_enabled,
+        body.auto_discovery_min_members,
+        body.auto_discovery_interval_hours,
     )
     return {"status": "ok"}
