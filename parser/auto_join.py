@@ -12,8 +12,9 @@ JOIN_DELAY_MAX = 300
 
 
 def compute_backoff_delay(attempt: int, base: float = 2.0, cap: float = 300.0) -> float:
-    jitter = random.uniform(0, base)
-    return min(base * (2 ** attempt) + jitter, cap)
+    deterministic = min(cap, base * (2 ** attempt))
+    jitter = random.uniform(0, deterministic * 0.5)
+    return min(cap, deterministic + jitter)
 
 
 def is_russian_group(title: Optional[str], description: Optional[str]) -> bool:
