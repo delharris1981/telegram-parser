@@ -1,9 +1,5 @@
-import os
 import pytest
 import aiosqlite
-
-os.environ.setdefault("DB_PATH", ":memory:")
-
 from db.init import init_db
 
 
