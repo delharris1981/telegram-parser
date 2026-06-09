@@ -24,6 +24,14 @@ def test_has_cyrillic_mixed():
     assert has_cyrillic("Price: 100 рублей") is True
 
 
+def test_has_cyrillic_yo_lowercase():
+    assert has_cyrillic("ёж") is True
+
+
+def test_has_cyrillic_yo_uppercase():
+    assert has_cyrillic("Ёлка") is True
+
+
 # --- is_spam_link ---
 
 def test_is_spam_link_joinchat():
@@ -60,6 +68,12 @@ def test_find_keyword_match_empty_keywords():
     assert find_keyword_match("купить квартиру", []) is None
 
 
+def test_find_keyword_match_substring_match_is_intentional():
+    # Spec: "exact-string" means literal substring, not word boundary
+    # "купить" IS a substring of "закупить" — this is expected behavior
+    assert find_keyword_match("закупить товар", ["купить"]) == "купить"
+
+
 # --- build_profile_link ---
 
 def test_build_profile_link_with_username():
@@ -77,3 +91,9 @@ def test_build_profile_link_without_username():
 def test_build_profile_link_empty_username():
     link = build_profile_link(username="", sender_id=789)
     assert "tg://user?id=789" in link
+
+
+def test_build_profile_link_xss_username_is_escaped():
+    link = build_profile_link(username="<script>alert(1)</script>", sender_id=1)
+    assert "<script>" not in link
+    assert "&lt;script&gt;" in link
