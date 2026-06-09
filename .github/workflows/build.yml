@@ -39,7 +39,7 @@ jobs:
         run: mv dist/telelistener dist/telelistener-macos
       - name: Rename binary (Windows)
         if: runner.os == 'Windows'
-        run: Rename-Item dist\telelistener.exe dist\telelistener-windows.exe
+        run: Move-Item dist\telelistener.exe dist\telelistener-windows.exe
         shell: pwsh
       - uses: actions/upload-artifact@v4
         with:
