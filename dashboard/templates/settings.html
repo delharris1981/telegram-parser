@@ -1,109 +1,155 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Settings</h2>
 
-<section style="max-width:520px;background:#fff;padding:20px;border-radius:6px;border:1px solid #ddd;margin-bottom:24px;">
-  <h3 style="margin-top:0;">Telegram API Credentials</h3>
-  <p style="color:#666;font-size:13px;margin-top:0;">
-    Obtain API ID and Hash from
-    <a href="https://my.telegram.org/apps" target="_blank" rel="noopener">my.telegram.org/apps</a>.
-    The parser must be restarted after saving.
-  </p>
+<div class="page-hd">
+  <div class="page-title">Settings</div>
+  <div class="page-sub">Telegram API credentials and notification preferences.</div>
+</div>
 
-  <label style="display:block;margin-bottom:4px;">API ID</label>
-  <input type="number" id="api-id" placeholder="12345678" style="width:260px;">
-  <br><br>
+<div style="max-width:580px;display:flex;flex-direction:column;gap:20px;">
 
-  <label style="display:block;margin-bottom:4px;">API Hash</label>
-  <input type="text" id="api-hash" placeholder="32-character hex string" style="width:320px;">
-  <br><br>
+  <!-- API Credentials -->
+  <div class="card">
+    <div class="card-head"><span class="card-title">Telegram API Credentials</span></div>
+    <div class="card-body">
+      <p class="form-hint" style="margin-bottom:18px;">
+        Obtain your credentials at
+        <a class="link" href="https://my.telegram.org/apps" target="_blank">my.telegram.org/apps</a>.
+        The parser reconnects automatically once credentials are saved — no restart needed.
+      </p>
 
-  <label style="display:block;margin-bottom:4px;">Session Name</label>
-  <input type="text" id="session-name" placeholder="telelistener" style="width:220px;">
-  <br><br>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="api-id">API ID</label>
+          <input type="number" id="api-id" placeholder="12345678">
+        </div>
+        <div class="form-group">
+          <label for="session-name">Session Name</label>
+          <input type="text" id="session-name" placeholder="telelistener">
+        </div>
+      </div>
 
-  <details style="margin-bottom:16px;">
-    <summary style="cursor:pointer;font-weight:bold;">Proxy (optional)</summary>
-    <div style="margin-top:12px;">
-      <label style="display:block;margin-bottom:4px;">Proxy Type</label>
-      <select id="proxy-type" style="padding:6px;border:1px solid #ccc;border-radius:4px;width:140px;">
-        <option value="">None</option>
-        <option value="socks5">SOCKS5</option>
-        <option value="http">HTTP</option>
-      </select>
-      <br><br>
+      <div class="form-group">
+        <label for="api-hash">API Hash</label>
+        <input type="text" id="api-hash" placeholder="32-character hex string">
+      </div>
 
-      <label style="display:block;margin-bottom:4px;">Proxy Host</label>
-      <input type="text" id="proxy-host" placeholder="127.0.0.1" style="width:220px;">
-      <br><br>
+      <details style="margin-bottom:18px;">
+        <summary style="cursor:pointer;font-size:12px;font-weight:600;color:var(--muted);user-select:none;margin-bottom:0;">
+          ▸ Proxy settings (optional)
+        </summary>
+        <div style="margin-top:14px;display:grid;grid-template-columns:130px 1fr 90px;gap:12px;">
+          <div class="form-group" style="margin:0;">
+            <label for="proxy-type">Type</label>
+            <select id="proxy-type">
+              <option value="">None</option>
+              <option value="socks5">SOCKS5</option>
+              <option value="http">HTTP</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label for="proxy-host">Host</label>
+            <input type="text" id="proxy-host" placeholder="127.0.0.1">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label for="proxy-port">Port</label>
+            <input type="number" id="proxy-port" placeholder="1080">
+          </div>
+        </div>
+      </details>
 
-      <label style="display:block;margin-bottom:4px;">Proxy Port</label>
-      <input type="number" id="proxy-port" placeholder="1080" style="width:120px;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="btn btn-primary" onclick="saveApiConfig()">Save Credentials</button>
+        <span id="api-msg" class="text-sm"></span>
+      </div>
     </div>
-  </details>
+  </div>
 
-  <button onclick="saveApiConfig()">Save API Config</button>
-  <span id="api-status" style="color:green;margin-left:12px;"></span>
-</section>
+  <!-- Notifications -->
+  <div class="card">
+    <div class="card-head"><span class="card-title">Notifications</span></div>
+    <div class="card-body">
+      <div class="form-group">
+        <label>Enable Telegram Notifications</label>
+        <div class="toggle-wrap" style="margin-top:6px;">
+          <label class="toggle">
+            <input type="checkbox" id="notif-toggle" onchange="updateToggleLabel()">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+          <span id="toggle-lbl" class="text-sm text-muted">Disabled</span>
+        </div>
+        <div class="form-hint">Send a Telegram message to yourself when a keyword match is found.</div>
+      </div>
 
-<section style="max-width:520px;background:#fff;padding:20px;border-radius:6px;border:1px solid #ddd;">
-  <h3 style="margin-top:0;">Notification Settings</h3>
+      <div class="form-group">
+        <label for="notif-dest">Notification Destination</label>
+        <input type="text" id="notif-dest" placeholder="@username, user ID, or 'me'">
+        <div class="form-hint">Use <code>me</code> to send to your own account.</div>
+      </div>
 
-  <label style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
-    <input type="checkbox" id="notif-toggle">
-    Enable Telegram Notifications
-  </label>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="btn btn-primary" onclick="saveNotifs()">Save Notifications</button>
+        <span id="notif-msg" class="text-sm"></span>
+      </div>
+    </div>
+  </div>
 
-  <label style="display:block;margin-bottom:6px;">Notification Destination</label>
-  <input type="text" id="notif-dest" placeholder="@handle, user_id, or 'me'" style="width:260px;">
-  <br><br>
-
-  <button onclick="saveNotifs()">Save Notifications</button>
-  <span id="notif-status" style="color:green;margin-left:12px;"></span>
-</section>
+</div>
 
 <script>
+function updateToggleLabel() {
+  const on = document.getElementById('notif-toggle').checked;
+  const lbl = document.getElementById('toggle-lbl');
+  lbl.textContent = on ? 'Enabled' : 'Disabled';
+  lbl.style.color = on ? 'var(--success)' : 'var(--muted)';
+}
+
+function setMsg(id, text, ok) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.style.color = ok ? 'var(--success)' : 'var(--danger)';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.textContent = ''; }, 4000);
+}
+
 async function loadApiConfig() {
-  const r = await fetch('/api/settings/api-config');
-  const s = await r.json();
-  document.getElementById('api-id').value = s.api_id || '';
-  document.getElementById('api-hash').value = s.api_hash || '';
+  const s = await fetch('/api/settings/api-config').then(r => r.json());
+  document.getElementById('api-id').value       = s.api_id || '';
+  document.getElementById('api-hash').value     = s.api_hash || '';
   document.getElementById('session-name').value = s.session_name || 'telelistener';
-  document.getElementById('proxy-type').value = s.proxy_type || '';
-  document.getElementById('proxy-host').value = s.proxy_host || '';
-  document.getElementById('proxy-port').value = s.proxy_port || '';
+  document.getElementById('proxy-type').value   = s.proxy_type || '';
+  document.getElementById('proxy-host').value   = s.proxy_host || '';
+  document.getElementById('proxy-port').value   = s.proxy_port || '';
 }
 
 async function saveApiConfig() {
   const body = {
-    api_id: parseInt(document.getElementById('api-id').value) || 0,
-    api_hash: document.getElementById('api-hash').value.trim(),
+    api_id:       parseInt(document.getElementById('api-id').value) || 0,
+    api_hash:     document.getElementById('api-hash').value.trim(),
     session_name: document.getElementById('session-name').value.trim() || 'telelistener',
-    proxy_type: document.getElementById('proxy-type').value,
-    proxy_host: document.getElementById('proxy-host').value.trim(),
-    proxy_port: parseInt(document.getElementById('proxy-port').value) || 0,
+    proxy_type:   document.getElementById('proxy-type').value,
+    proxy_host:   document.getElementById('proxy-host').value.trim(),
+    proxy_port:   parseInt(document.getElementById('proxy-port').value) || 0,
   };
   const r = await fetch('/api/settings/api-config', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify(body),
   });
-  const el = document.getElementById('api-status');
-  el.textContent = r.ok ? 'Saved! Restart the parser to apply.' : 'Error saving.';
-  el.style.color = r.ok ? 'green' : 'red';
-  setTimeout(() => { el.textContent = ''; }, 4000);
+  setMsg('api-msg', r.ok ? 'Saved — parser will reconnect within 30 s' : 'Error saving', r.ok);
 }
 
 async function loadNotifs() {
-  const r = await fetch('/api/settings');
-  const s = await r.json();
+  const s = await fetch('/api/settings').then(r => r.json());
   document.getElementById('notif-toggle').checked = s.tg_notifications_enabled === 1;
-  document.getElementById('notif-dest').value = s.tg_notification_destination || '';
+  document.getElementById('notif-dest').value     = s.tg_notification_destination || '';
+  updateToggleLabel();
 }
 
 async function saveNotifs() {
   const body = {
-    tg_notifications_enabled: document.getElementById('notif-toggle').checked ? 1 : 0,
+    tg_notifications_enabled:    document.getElementById('notif-toggle').checked ? 1 : 0,
     tg_notification_destination: document.getElementById('notif-dest').value.trim(),
   };
   const r = await fetch('/api/settings', {
@@ -111,10 +157,7 @@ async function saveNotifs() {
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify(body),
   });
-  const el = document.getElementById('notif-status');
-  el.textContent = r.ok ? 'Saved!' : 'Error saving.';
-  el.style.color = r.ok ? 'green' : 'red';
-  setTimeout(() => { el.textContent = ''; }, 2000);
+  setMsg('notif-msg', r.ok ? 'Saved!' : 'Error saving', r.ok);
 }
 
 loadApiConfig();

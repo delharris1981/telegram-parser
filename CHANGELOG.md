@@ -4,6 +4,19 @@ All notable changes to TeleListener are documented here.
 
 ## [Unreleased]
 
+## [1.2] – 2026-06-09
+
+### Added
+- **Keyword editing** – each keyword chip now has an inline edit button (✎). Click it, change the phrase, press Enter or Save. Changes take effect immediately.
+- **Bulk keyword add** – the Add Keywords panel accepts comma- or newline-separated values so multiple keywords can be added in one action.
+- **Stats cards** – the Live Feed page shows Total Hits, Active Keywords, and Groups Monitored at a glance, sourced from the new `GET /api/stats` endpoint.
+- **`GET /api/stats`** – returns `{hits, keywords, groups}` counts in a single request.
+- **`PUT /api/keywords/{id}`** – new route for renaming an existing keyword.
+
+### Changed
+- **Full dashboard redesign** – modern card-based layout, sticky dark nav with brand logo, consistent typography and colour system, relative timestamps ("2m ago"), keyword chips with edit/delete actions, custom toggle for notification switch, responsive on mobile.
+- All five templates (`base.html`, `index.html`, `keywords.html`, `groups.html`, `settings.html`) rewritten.
+
 ## [1.1] – 2026-06-09
 
 ### Fixed

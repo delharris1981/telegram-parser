@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
 import config
-from db.operations import list_keywords, add_keyword, delete_keyword
+from db.operations import list_keywords, add_keyword, update_keyword, delete_keyword
 
 router = APIRouter()
 
@@ -17,7 +17,13 @@ async def get_keywords():
 
 @router.post("/api/keywords")
 async def create_keyword(body: KeywordIn):
-    await add_keyword(config.DB_PATH, body.phrase)
+    await add_keyword(config.DB_PATH, body.phrase.strip())
+    return {"status": "ok"}
+
+
+@router.put("/api/keywords/{keyword_id}")
+async def edit_keyword(keyword_id: int, body: KeywordIn):
+    await update_keyword(config.DB_PATH, keyword_id, body.phrase.strip())
     return {"status": "ok"}
 
 

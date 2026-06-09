@@ -30,6 +30,12 @@ async def list_keywords(db_path: str) -> list[dict]:
     return await _fetchall(db_path, "SELECT id, phrase, created_at FROM keywords ORDER BY created_at DESC")
 
 
+async def update_keyword(db_path: str, keyword_id: int, phrase: str) -> None:
+    async with aiosqlite.connect(db_path, timeout=10.0) as db:
+        await db.execute("UPDATE keywords SET phrase=? WHERE id=?", (phrase, keyword_id))
+        await db.commit()
+
+
 async def delete_keyword(db_path: str, keyword_id: int) -> None:
     async with aiosqlite.connect(db_path, timeout=10.0) as db:
         await db.execute("DELETE FROM keywords WHERE id=?", (keyword_id,))
@@ -83,6 +89,21 @@ async def add_hit(
             (group_id, sender_id, username, first_name, original_comment, keyword_matched),
         )
         await db.commit()
+
+
+async def count_hits(db_path: str) -> int:
+    row = await _fetchone(db_path, "SELECT COUNT(*) AS n FROM parsed_hits")
+    return (row or {}).get("n", 0)
+
+
+async def count_keywords(db_path: str) -> int:
+    row = await _fetchone(db_path, "SELECT COUNT(*) AS n FROM keywords")
+    return (row or {}).get("n", 0)
+
+
+async def count_groups(db_path: str) -> int:
+    row = await _fetchone(db_path, "SELECT COUNT(*) AS n FROM monitored_groups")
+    return (row or {}).get("n", 0)
 
 
 async def list_hits(db_path: str, limit: int = 100) -> list[dict]:

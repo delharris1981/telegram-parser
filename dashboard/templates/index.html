@@ -1,33 +1,90 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Live Keyword Hits</h2>
-<div id="feed"><p>Loading&#8230;</p></div>
+
+<div class="page-hd">
+  <div class="page-title">Live Feed</div>
+  <div class="page-sub">Keyword matches from monitored Telegram groups — auto-refreshes every 10 s</div>
+</div>
+
+<div class="stats">
+  <div class="stat">
+    <div class="stat-lbl">Total Hits</div>
+    <div class="stat-val" id="s-hits">—</div>
+    <div class="stat-note">all time</div>
+  </div>
+  <div class="stat">
+    <div class="stat-lbl">Active Keywords</div>
+    <div class="stat-val" id="s-kws">—</div>
+    <div class="stat-note"><a href="/keywords" class="link">manage →</a></div>
+  </div>
+  <div class="stat">
+    <div class="stat-lbl">Groups Monitored</div>
+    <div class="stat-val" id="s-grps">—</div>
+    <div class="stat-note"><a href="/groups" class="link">view all →</a></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head">
+    <span class="card-title">Recent Matches</span>
+    <span class="text-muted text-xs" id="refresh-ts"></span>
+  </div>
+  <div class="tbl-wrap" id="feed">
+    <div class="empty"><div class="empty-icon">📡</div><div class="empty-msg">Loading…</div></div>
+  </div>
+</div>
 
 <script>
+async function loadStats() {
+  try {
+    const s = await fetch('/api/stats').then(r => r.json());
+    document.getElementById('s-hits').textContent  = s.hits.toLocaleString();
+    document.getElementById('s-kws').textContent   = s.keywords.toLocaleString();
+    document.getElementById('s-grps').textContent  = s.groups.toLocaleString();
+  } catch (_) {}
+}
+
 async function loadFeed() {
-  const resp = await fetch('/api/hits?limit=100');
-  const hits = await resp.json();
+  const hits = await fetch('/api/hits?limit=100').then(r => r.json());
+  const el = document.getElementById('feed');
+  document.getElementById('refresh-ts').textContent = 'Updated ' + fmt(new Date().toISOString());
+
   if (!hits.length) {
-    document.getElementById('feed').innerHTML = '<p>No hits yet.</p>';
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><div class="empty-msg">No keyword matches yet. Configure keywords in the <a href="/keywords" class="link">Keywords</a> tab to start monitoring.</div></div>';
     return;
   }
-  let html = '<table><thead><tr><th>Time</th><th>Group</th><th>User</th><th>Keyword</th><th>Message</th></tr></thead><tbody>';
-  hits.forEach(h => {
-    const userLink = h.username
-      ? `<a href="https://t.me/${h.username}" target="_blank">@${h.username}</a>`
-      : `<a href="tg://user?id=${h.sender_id}">[No Username - Click to Chat]</a>`;
-    html += `<tr>
-      <td>${h.captured_at}</td>
-      <td>${h.group_title || ''}</td>
-      <td>${h.first_name || ''} ${userLink}</td>
-      <td><span class="keyword-badge">${h.keyword_matched}</span></td>
-      <td>${h.original_comment}</td>
+
+  const rows = hits.map(h => {
+    const user = h.username
+      ? `<a class="link" href="https://t.me/${h.username}" target="_blank">@${h.username}</a>`
+      : `<a class="link" href="tg://user?id=${h.sender_id}">${h.first_name || '<span class="text-muted">Unknown</span>'}</a>`;
+    const msg = h.original_comment.length > 130
+      ? h.original_comment.slice(0, 130) + '…'
+      : h.original_comment;
+    const group = h.group_title
+      ? `<span class="fw-600">${h.group_title}</span>`
+      : '<span class="text-muted">—</span>';
+    return `<tr>
+      <td class="text-muted text-xs" style="white-space:nowrap;">${fmt(h.captured_at)}</td>
+      <td>${group}</td>
+      <td>${user}${h.first_name ? `<div class="text-xs text-muted">${h.first_name}</div>` : ''}</td>
+      <td><span class="badge badge-blue">${h.keyword_matched}</span></td>
+      <td style="max-width:380px;" title="${h.original_comment}">
+        <span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${msg}</span>
+      </td>
     </tr>`;
-  });
-  html += '</tbody></table>';
-  document.getElementById('feed').innerHTML = html;
+  }).join('');
+
+  el.innerHTML = `<table>
+    <thead><tr>
+      <th>Time</th><th>Group</th><th>User</th><th>Keyword</th><th>Message</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
 }
-loadFeed();
-setInterval(loadFeed, 10000);
+
+function refresh() { loadFeed(); loadStats(); }
+refresh();
+setInterval(refresh, 10000);
 </script>
 {% endblock %}

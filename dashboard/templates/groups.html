@@ -1,21 +1,55 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Monitored Groups</h2>
-<table>
-  <thead><tr><th>ID</th><th>Telegram ID</th><th>Title</th><th>Handle</th><th>Joined At</th></tr></thead>
-  <tbody id="groups-body"></tbody>
-</table>
+
+<div class="page-hd">
+  <div class="page-title">Groups</div>
+  <div class="page-sub">Telegram groups the parser has found keyword matches in. Groups are added automatically.</div>
+</div>
+
+<div class="card">
+  <div class="card-head">
+    <span class="card-title">Monitored Groups</span>
+    <span class="badge badge-green" id="grp-count">0</span>
+  </div>
+  <div class="tbl-wrap" id="grp-wrap">
+    <div class="empty"><div class="empty-icon">📡</div><div class="empty-msg">Loading…</div></div>
+  </div>
+</div>
+
 <script>
 fetch('/api/groups').then(r => r.json()).then(gs => {
-  document.getElementById('groups-body').innerHTML = gs.map(g =>
-    `<tr>
-      <td>${g.id}</td>
-      <td>${g.telegram_id}</td>
-      <td>${g.title || ''}</td>
-      <td>${g.handle ? '<a href="https://t.me/' + g.handle + '" target="_blank">@' + g.handle + '</a>' : '-'}</td>
-      <td>${g.joined_at}</td>
-    </tr>`
-  ).join('');
+  document.getElementById('grp-count').textContent = gs.length;
+  const wrap = document.getElementById('grp-wrap');
+
+  if (!gs.length) {
+    wrap.innerHTML = `<div class="empty">
+      <div class="empty-icon">👥</div>
+      <div class="empty-msg">No groups yet. They appear here automatically once the parser finds a keyword match in a group.</div>
+    </div>`;
+    return;
+  }
+
+  const rows = gs.map(g => {
+    const handle = g.handle
+      ? `<a class="link" href="https://t.me/${g.handle}" target="_blank">@${g.handle}</a>`
+      : '<span class="text-muted">—</span>';
+    const title = g.title
+      ? `<span class="fw-600">${g.title}</span>`
+      : '<span class="text-muted">Unnamed group</span>';
+    return `<tr>
+      <td>${title}</td>
+      <td>${handle}</td>
+      <td class="text-muted text-xs" style="font-family:monospace;">${g.telegram_id}</td>
+      <td class="text-muted text-xs" style="white-space:nowrap;">${fmt(g.joined_at)}</td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `<table>
+    <thead><tr>
+      <th>Title</th><th>Handle</th><th>Telegram ID</th><th>First Seen</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
 });
 </script>
 {% endblock %}

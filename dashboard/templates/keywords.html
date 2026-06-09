@@ -1,39 +1,134 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Monitored Keywords</h2>
-<form id="add-form" style="margin-bottom:16px;display:flex;gap:8px;">
-  <input type="text" id="new-phrase" placeholder="e.g. купить" required>
-  <button type="submit">Add</button>
-</form>
-<table>
-  <thead><tr><th>ID</th><th>Phrase</th><th>Added</th><th>Action</th></tr></thead>
-  <tbody id="kw-body"></tbody>
-</table>
+
+<div class="page-hd">
+  <div class="page-title">Keywords</div>
+  <div class="page-sub">Phrases the parser watches for across all Telegram groups. Matching is case-insensitive.</div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start;">
+
+  <!-- Active keywords card -->
+  <div class="card">
+    <div class="card-head">
+      <span class="card-title">Active Keywords</span>
+      <span class="badge badge-blue" id="kw-count">0</span>
+    </div>
+    <div class="card-body">
+      <div class="chip-grid" id="chip-grid">
+        <span class="text-muted text-sm">Loading…</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add card -->
+  <div class="card">
+    <div class="card-head"><span class="card-title">Add Keywords</span></div>
+    <div class="card-body">
+      <div class="form-group">
+        <label for="new-kw">Keyword(s)</label>
+        <textarea id="new-kw" rows="4"
+          placeholder="Enter keywords separated by commas or new lines&#10;&#10;e.g. купить, продать&#10;квартира"></textarea>
+        <div class="form-hint">Separate multiple entries with commas or new lines.</div>
+      </div>
+      <button class="btn btn-primary" style="width:100%;" onclick="addKeywords()">
+        Add Keywords
+      </button>
+    </div>
+  </div>
+
+</div>
+
 <script>
+let _kws = [];
+
 async function load() {
-  const r = await fetch('/api/keywords');
-  const kws = await r.json();
-  document.getElementById('kw-body').innerHTML = kws.map(k =>
-    `<tr><td>${k.id}</td><td>${k.phrase}</td><td>${k.created_at}</td>
-     <td><button onclick="del(${k.id})">Delete</button></td></tr>`
-  ).join('');
+  _kws = await fetch('/api/keywords').then(r => r.json());
+  render();
 }
-async function del(id) {
-  await fetch('/api/keywords/' + id, {method: 'DELETE'});
-  load();
+
+function render() {
+  const grid = document.getElementById('chip-grid');
+  document.getElementById('kw-count').textContent = _kws.length;
+
+  if (!_kws.length) {
+    grid.innerHTML = '<div class="empty-msg text-muted text-sm">No keywords yet. Add some using the panel on the right.</div>';
+    return;
+  }
+
+  grid.innerHTML = _kws.map(k => `
+    <span class="chip" id="chip-${k.id}">
+      <span id="chip-txt-${k.id}">${esc(k.phrase)}</span>
+      <span style="display:flex;gap:1px;margin-left:4px;">
+        <button class="chip-btn chip-btn-edit" onclick="startEdit(${k.id})" title="Edit">✎</button>
+        <button class="chip-btn chip-btn-del"  onclick="del(${k.id})"       title="Remove">✕</button>
+      </span>
+    </span>
+    <span class="chip-edit-row" id="chip-edit-${k.id}">
+      <input type="text" id="chip-input-${k.id}" value="${esc(k.phrase)}"
+             onkeydown="editKey(event,${k.id})">
+      <button class="btn btn-primary btn-xs" onclick="saveEdit(${k.id})">Save</button>
+      <button class="btn btn-ghost   btn-xs" onclick="cancelEdit(${k.id})">✕</button>
+    </span>
+  `).join('');
 }
-document.getElementById('add-form').addEventListener('submit', async e => {
-  e.preventDefault();
-  const phrase = document.getElementById('new-phrase').value.trim();
-  if (!phrase) return;
-  await fetch('/api/keywords', {
-    method: 'POST',
+
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function startEdit(id) {
+  document.getElementById('chip-' + id).style.display = 'none';
+  const row = document.getElementById('chip-edit-' + id);
+  row.classList.add('open');
+  row.querySelector('input').focus();
+}
+function cancelEdit(id) {
+  document.getElementById('chip-' + id).style.display = '';
+  document.getElementById('chip-edit-' + id).classList.remove('open');
+}
+function editKey(e, id) {
+  if (e.key === 'Enter')  saveEdit(id);
+  if (e.key === 'Escape') cancelEdit(id);
+}
+async function saveEdit(id) {
+  const val = document.getElementById('chip-input-' + id).value.trim();
+  if (!val) { toast('Keyword cannot be empty', false); return; }
+  const r = await fetch('/api/keywords/' + id, {
+    method: 'PUT',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({phrase}),
+    body: JSON.stringify({phrase: val}),
   });
-  document.getElementById('new-phrase').value = '';
+  if (r.ok) { toast('Keyword updated'); load(); }
+  else toast('Failed to update', false);
+}
+
+async function del(id) {
+  const kw = _kws.find(k => k.id === id);
+  const r = await fetch('/api/keywords/' + id, {method: 'DELETE'});
+  if (r.ok) { toast((kw ? '"' + kw.phrase + '"' : 'Keyword') + ' removed'); load(); }
+  else toast('Failed to delete', false);
+}
+
+async function addKeywords() {
+  const raw = document.getElementById('new-kw').value;
+  const phrases = raw.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+  if (!phrases.length) return;
+  let added = 0;
+  for (const phrase of phrases) {
+    const r = await fetch('/api/keywords', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({phrase}),
+    });
+    if (r.ok) added++;
+  }
+  document.getElementById('new-kw').value = '';
+  if (added) toast(added === 1 ? '1 keyword added' : added + ' keywords added');
+  else toast('No new keywords added (may already exist)', false);
   load();
-});
+}
+
 load();
 </script>
 {% endblock %}
