@@ -48,6 +48,10 @@ async def on_new_message(event, client: TelegramClient) -> None:
         return
 
     sender = await event.get_sender()
+    # sender is None for anonymous group admins; fall back to the chat entity so
+    # we still record the hit rather than silently dropping it.
+    if sender is None:
+        sender = await event.get_chat()
     if sender is None:
         return
     if getattr(sender, "bot", False):
@@ -55,13 +59,17 @@ async def on_new_message(event, client: TelegramClient) -> None:
 
     keywords = [k["phrase"] for k in await list_keywords(config.DB_PATH)]
     matched = find_keyword_match(text, keywords)
-    if matched is None:
-        return
 
     chat = await event.get_chat()
     telegram_id = chat.id
-    title = getattr(chat, "title", None)
+    title = getattr(chat, "title", str(telegram_id))
     handle = getattr(chat, "username", None)
+
+    if matched is None:
+        logger.debug("Message from %s — no keyword match", title)
+        return
+
+    logger.info("Keyword match: %r in %s", matched, title)
 
     await add_monitored_group(config.DB_PATH, telegram_id=telegram_id, title=title, handle=handle)
     group = await get_group_by_telegram_id(config.DB_PATH, telegram_id)
@@ -71,7 +79,7 @@ async def on_new_message(event, client: TelegramClient) -> None:
 
     username = getattr(sender, "username", None)
     first_name = getattr(sender, "first_name", None)
-    sender_id = sender.id
+    sender_id = getattr(sender, "id", 0)
 
     await add_hit(
         config.DB_PATH,
@@ -82,7 +90,7 @@ async def on_new_message(event, client: TelegramClient) -> None:
         original_comment=text,
         keyword_matched=matched,
     )
-    logger.info("Hit saved: keyword=%s user=%s", matched, username or sender_id)
+    logger.info("Hit saved: keyword=%r group=%s user=%s", matched, title, username or sender_id)
 
     settings = await get_settings(config.DB_PATH)
     if settings and settings["tg_notifications_enabled"]:

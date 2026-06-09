@@ -90,10 +90,14 @@ async def join_group(body: JoinIn):
         from telethon.tl.functions.channels import JoinChannelRequest
         entity = await client.get_entity(handle)
         await client(JoinChannelRequest(entity))
+        # Re-fetch entity after joining to get an up-to-date participants_count
+        entity = await client.get_entity(handle)
 
         telegram_id = entity.id
         title = getattr(entity, "title", handle)
         member_count = getattr(entity, "participants_count", None)
+        if member_count is None:
+            member_count = body.member_count or 0
     except Exception as exc:
         raise HTTPException(500, f"Could not join group: {exc}")
 

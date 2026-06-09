@@ -137,7 +137,7 @@ async def count_keywords(db_path: str) -> int:
 
 
 async def count_groups(db_path: str) -> int:
-    row = await _fetchone(db_path, "SELECT COUNT(*) AS n FROM monitored_groups")
+    row = await _fetchone(db_path, "SELECT COUNT(*) AS n FROM joined_groups")
     return (row or {}).get("n", 0)
 
 

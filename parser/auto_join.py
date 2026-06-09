@@ -24,7 +24,9 @@ def is_russian_group(title: Optional[str], description: Optional[str]) -> bool:
 
 async def _try_join(client, handle: str) -> bool:
     try:
-        await client.join_chat(handle)
+        from telethon.tl.functions.channels import JoinChannelRequest
+        entity = await client.get_entity(handle)
+        await client(JoinChannelRequest(entity))
         logger.info("Joined group: %s", handle)
         return True
     except Exception as exc:
