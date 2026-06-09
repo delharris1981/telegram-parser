@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Monitored Keywords</h2>
+<form id="add-form" style="margin-bottom:16px;display:flex;gap:8px;">
+  <input type="text" id="new-phrase" placeholder="e.g. купить" required>
+  <button type="submit">Add</button>
+</form>
+<table>
+  <thead><tr><th>ID</th><th>Phrase</th><th>Added</th><th>Action</th></tr></thead>
+  <tbody id="kw-body"></tbody>
+</table>
+<script>
+async function load() {
+  const r = await fetch('/api/keywords');
+  const kws = await r.json();
+  document.getElementById('kw-body').innerHTML = kws.map(k =>
+    `<tr><td>${k.id}</td><td>${k.phrase}</td><td>${k.created_at}</td>
+     <td><button onclick="del(${k.id})">Delete</button></td></tr>`
+  ).join('');
+}
+async function del(id) {
+  await fetch('/api/keywords/' + id, {method: 'DELETE'});
+  load();
+}
+document.getElementById('add-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const phrase = document.getElementById('new-phrase').value.trim();
+  if (!phrase) return;
+  await fetch('/api/keywords', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({phrase}),
+  });
+  document.getElementById('new-phrase').value = '';
+  load();
+});
+load();
+</script>
+{% endblock %}

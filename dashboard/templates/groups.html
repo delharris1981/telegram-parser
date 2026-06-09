@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Monitored Groups</h2>
+<table>
+  <thead><tr><th>ID</th><th>Telegram ID</th><th>Title</th><th>Handle</th><th>Joined At</th></tr></thead>
+  <tbody id="groups-body"></tbody>
+</table>
+<script>
+fetch('/api/groups').then(r => r.json()).then(gs => {
+  document.getElementById('groups-body').innerHTML = gs.map(g =>
+    `<tr>
+      <td>${g.id}</td>
+      <td>${g.telegram_id}</td>
+      <td>${g.title || ''}</td>
+      <td>${g.handle ? '<a href="https://t.me/' + g.handle + '" target="_blank">@' + g.handle + '</a>' : '-'}</td>
+      <td>${g.joined_at}</td>
+    </tr>`
+  ).join('');
+});
+</script>
+{% endblock %}

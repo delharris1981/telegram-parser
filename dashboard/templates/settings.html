@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Notification Settings</h2>
+<div style="max-width:480px;">
+  <label style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+    <input type="checkbox" id="notif-toggle">
+    Enable Telegram Notifications
+  </label>
+  <label style="display:block;margin-bottom:6px;">Notification Destination:</label>
+  <input type="text" id="notif-dest" placeholder="@handle, user_id, or 'me'">
+  <br><br>
+  <button onclick="save()">Save</button>
+  <p id="status-msg"></p>
+</div>
+<script>
+async function load() {
+  const r = await fetch('/api/settings');
+  const s = await r.json();
+  document.getElementById('notif-toggle').checked = s.tg_notifications_enabled === 1;
+  document.getElementById('notif-dest').value = s.tg_notification_destination;
+}
+async function save() {
+  const enabled = document.getElementById('notif-toggle').checked ? 1 : 0;
+  const dest = document.getElementById('notif-dest').value.trim();
+  await fetch('/api/settings', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({tg_notifications_enabled: enabled, tg_notification_destination: dest}),
+  });
+  document.getElementById('status-msg').textContent = 'Saved!';
+  setTimeout(() => { document.getElementById('status-msg').textContent = ''; }, 2000);
+}
+load();
+</script>
+{% endblock %}
