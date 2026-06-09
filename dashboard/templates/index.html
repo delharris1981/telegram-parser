@@ -1,1 +1,33 @@
-<!DOCTYPE html><html><body>TeleListener</body></html>
+{% extends "base.html" %}
+{% block content %}
+<h2>Live Keyword Hits</h2>
+<div id="feed"><p>Loading&#8230;</p></div>
+
+<script>
+async function loadFeed() {
+  const resp = await fetch('/api/hits?limit=100');
+  const hits = await resp.json();
+  if (!hits.length) {
+    document.getElementById('feed').innerHTML = '<p>No hits yet.</p>';
+    return;
+  }
+  let html = '<table><thead><tr><th>Time</th><th>Group</th><th>User</th><th>Keyword</th><th>Message</th></tr></thead><tbody>';
+  hits.forEach(h => {
+    const userLink = h.username
+      ? `<a href="https://t.me/${h.username}" target="_blank">@${h.username}</a>`
+      : `<a href="tg://user?id=${h.sender_id}">[No Username - Click to Chat]</a>`;
+    html += `<tr>
+      <td>${h.captured_at}</td>
+      <td>${h.group_title || ''}</td>
+      <td>${h.first_name || ''} ${userLink}</td>
+      <td><span class="keyword-badge">${h.keyword_matched}</span></td>
+      <td>${h.original_comment}</td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('feed').innerHTML = html;
+}
+loadFeed();
+setInterval(loadFeed, 10000);
+</script>
+{% endblock %}

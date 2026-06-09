@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TeleListener Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background: #f4f6f9; color: #333; }
+    nav { background: #2c3e50; padding: 10px 20px; display: flex; gap: 20px; }
+    nav a { color: #ecf0f1; text-decoration: none; font-size: 15px; }
+    nav a:hover { text-decoration: underline; }
+    .container { max-width: 1200px; margin: 20px auto; padding: 0 20px; }
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; font-size: 13px; }
+    th { background: #2c3e50; color: #fff; }
+    tr:nth-child(even) { background: #f9f9f9; }
+    .keyword-badge { background: #e74c3c; color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 11px; }
+    input[type=text] { padding: 6px; border: 1px solid #ccc; border-radius: 4px; width: 260px; }
+    button { padding: 6px 14px; background: #2c3e50; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    button:hover { background: #34495e; }
+    #status-msg { color: green; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/">Live Feed</a>
+    <a href="/keywords">Keywords</a>
+    <a href="/groups">Groups</a>
+    <a href="/settings">Settings</a>
+  </nav>
+  <div class="container">
+    {% block content %}{% endblock %}
+  </div>
+</body>
+</html>
