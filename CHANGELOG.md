@@ -4,6 +4,14 @@ All notable changes to TeleListener are documented here.
 
 ## [Unreleased]
 
+## [1.1] – 2026-06-09
+
+### Fixed
+- **Dashboard starts before parser** – the binary no longer crashes on launch if Telegram credentials are not yet configured. The dashboard comes up immediately on port 8000; the parser retries every 30 s and connects automatically once credentials are saved in Settings.
+- **DB path in frozen binary** – `config.py` now resolves `DB_PATH` relative to the binary's location (`sys.executable`) when running under PyInstaller, preventing `unable to open database file` errors when launching from a different working directory.
+- **DB directory auto-created** – `init_db` calls `mkdir(parents=True, exist_ok=True)` so the `db/` folder is created on first run without manual setup.
+- **Windows rename in CI** – switched from `Rename-Item` to `Move-Item` in the GitHub Actions workflow; `Rename-Item` does not accept a destination path, only a bare filename.
+
 ## [1.0] – 2026-06-09
 
 ### Added
