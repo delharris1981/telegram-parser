@@ -1,3 +1,4 @@
+import pytest
 from parser.notifications import build_notification_text
 
 
@@ -54,3 +55,52 @@ def test_notification_html_escapes_group_title():
     )
     assert "<b>Чат</b>" not in text
     assert "&lt;b&gt;Чат&lt;/b&gt;" in text
+
+
+def test_notification_html_escapes_keyword():
+    text = build_notification_text(
+        keyword="<b>купить</b>",
+        group_title="Чат",
+        username=None,
+        sender_id=555,
+        first_name="Тест",
+        comment="купить",
+    )
+    assert "<b>купить</b>" not in text
+    assert "&lt;b&gt;купить&lt;/b&gt;" in text
+
+
+def test_notification_html_escapes_first_name():
+    text = build_notification_text(
+        keyword="купить",
+        group_title="Чат",
+        username=None,
+        sender_id=666,
+        first_name="<Ivan>",
+        comment="купить",
+    )
+    assert "<Ivan>" not in text
+    assert "&lt;Ivan&gt;" in text
+
+
+@pytest.mark.asyncio
+async def test_send_notification_calls_client():
+    from unittest.mock import AsyncMock
+    from parser.notifications import send_notification
+
+    mock_client = AsyncMock()
+    await send_notification(mock_client, "@testdest", "<b>Hello</b>")
+    mock_client.send_message.assert_awaited_once_with(
+        "@testdest", "<b>Hello</b>", parse_mode="html"
+    )
+
+
+@pytest.mark.asyncio
+async def test_send_notification_swallows_exceptions():
+    from unittest.mock import AsyncMock
+    from parser.notifications import send_notification
+
+    mock_client = AsyncMock()
+    mock_client.send_message.side_effect = Exception("Routing error")
+    # Must not raise
+    await send_notification(mock_client, "@broken", "text")
