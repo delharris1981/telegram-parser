@@ -1,0 +1,115 @@
+from typing import Optional
+import aiosqlite
+
+
+async def _fetchall(db_path: str, query: str, params=()) -> list[dict]:
+    async with aiosqlite.connect(db_path, timeout=10.0) as db:
+        db.row_factory = aiosqlite.Row
+        cursor = await db.execute(query, params)
+        rows = await cursor.fetchall()
+        return [dict(row) for row in rows]
+
+
+async def _fetchone(db_path: str, query: str, params=()) -> Optional[dict]:
+    async with aiosqlite.connect(db_path, timeout=10.0) as db:
+        db.row_factory = aiosqlite.Row
+        cursor = await db.execute(query, params)
+        row = await cursor.fetchone()
+        return dict(row) if row else None
+
+
+# --- Keywords ---
+
+async def add_keyword(db_path: str, phrase: str) -> None:
+    async with aiosqlite.connect(db_path, timeout=10.0) as db:
+        await db.execute("INSERT OR IGNORE INTO keywords (phrase) VALUES (?)", (phrase,))
+        await db.commit()
+
+
+async def list_keywords(db_path: str) -> list[dict]:
+    return await _fetchall(db_path, "SELECT id, phrase, created_at FROM keywords ORDER BY created_at DESC")
+
+
+async def delete_keyword(db_path: str, keyword_id: int) -> None:
+    async with aiosqlite.connect(db_path, timeout=10.0) as db:
+        await db.execute("DELETE FROM keywords WHERE id=?", (keyword_id,))
+        await db.commit()
+
+
+# --- Monitored Groups ---
+
+async def add_monitored_group(
+    db_path: str, telegram_id: int, title: Optional[str], handle: Optional[str]
+) -> None:
+    async with aiosqlite.connect(db_path, timeout=10.0) as db:
+        await db.execute(
+            "INSERT OR IGNORE INTO monitored_groups (telegram_id, title, handle) VALUES (?, ?, ?)",
+            (telegram_id, title, handle),
+        )
+        await db.commit()
+
+
+async def list_monitored_groups(db_path: str) -> list[dict]:
+    return await _fetchall(
+        db_path,
+        "SELECT id, telegram_id, title, handle, joined_at FROM monitored_groups ORDER BY joined_at DESC",
+    )
+
+
+async def get_group_by_telegram_id(db_path: str, telegram_id: int) -> Optional[dict]:
+    return await _fetchone(
+        db_path,
+        "SELECT id, telegram_id, title, handle, joined_at FROM monitored_groups WHERE telegram_id=?",
+        (telegram_id,),
+    )
+
+
+# --- Parsed Hits ---
+
+async def add_hit(
+    db_path: str,
+    group_id: int,
+    sender_id: int,
+    username: Optional[str],
+    first_name: Optional[str],
+    original_comment: str,
+    keyword_matched: str,
+) -> None:
+    async with aiosqlite.connect(db_path, timeout=10.0) as db:
+        await db.execute(
+            """INSERT INTO parsed_hits
+               (group_id, sender_id, username, first_name, original_comment, keyword_matched)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (group_id, sender_id, username, first_name, original_comment, keyword_matched),
+        )
+        await db.commit()
+
+
+async def list_hits(db_path: str, limit: int = 100) -> list[dict]:
+    return await _fetchall(
+        db_path,
+        """SELECT ph.id, mg.title AS group_title, ph.sender_id, ph.username, ph.first_name,
+                  ph.original_comment, ph.keyword_matched, ph.captured_at
+           FROM parsed_hits ph
+           LEFT JOIN monitored_groups mg ON mg.id = ph.group_id
+           ORDER BY ph.captured_at DESC LIMIT ?""",
+        (limit,),
+    )
+
+
+# --- Settings ---
+
+async def get_settings(db_path: str) -> dict:
+    return await _fetchone(
+        db_path,
+        "SELECT id, tg_notifications_enabled, tg_notification_destination FROM settings WHERE id=1",
+    )
+
+
+async def update_settings(db_path: str, enabled: int, destination: str) -> None:
+    async with aiosqlite.connect(db_path, timeout=10.0) as db:
+        await db.execute(
+            "UPDATE settings SET tg_notifications_enabled=?, tg_notification_destination=? WHERE id=1",
+            (enabled, destination),
+        )
+        await db.commit()
