@@ -24,6 +24,7 @@
   <div class="card-head">
     <span class="card-title">Joined Groups</span>
     <span class="badge badge-blue" id="joined-count">0</span>
+    <button class="btn btn-ghost btn-sm" onclick="syncGroups(this)" style="margin-left:auto;">Sync from Telegram</button>
   </div>
   <div class="tbl-wrap" id="joined-wrap">
     <div class="empty"><div class="empty-icon">📡</div><div class="empty-msg">Loading…</div></div>
@@ -98,6 +99,23 @@ async function joinGroup(handle, title, telegram_id, member_count, btn) {
     const err = await r.json().catch(() => ({}));
     toast((err.detail || 'Failed to join'), false);
     btn.textContent = 'Join'; btn.disabled = false;
+  }
+}
+
+// ── Sync from Telegram ───────────────────────────────────────────
+async function syncGroups(btn) {
+  btn.textContent = 'Syncing…'; btn.disabled = true;
+  try {
+    const r = await fetch('/api/groups/sync', {method: 'POST'});
+    if (r.status === 503) { toast('Parser not connected to Telegram', false); return; }
+    if (!r.ok) { const e = await r.json().catch(()=>({})); toast(e.detail || 'Sync failed', false); return; }
+    const data = await r.json();
+    toast(data.synced > 0 ? `Imported ${data.synced} group${data.synced===1?'':'s'} from Telegram` : 'Already up to date');
+    loadJoined();
+  } catch(e) {
+    toast('Sync error: ' + e.message, false);
+  } finally {
+    btn.textContent = 'Sync from Telegram'; btn.disabled = false;
   }
 }
 

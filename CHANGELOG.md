@@ -4,6 +4,11 @@ All notable changes to TeleListener are documented here.
 
 ## [Unreleased]
 
+## [2.0] – 2026-06-10
+
+### Added
+- **Sync from Telegram** – new "Sync from Telegram" button on the Groups page imports all groups and channels the Telegram account is already a member of (`client.get_dialogs()`). New `POST /api/groups/sync` endpoint; groups already in the list are skipped.
+
 ## [1.9] – 2026-06-10
 
 ### Fixed

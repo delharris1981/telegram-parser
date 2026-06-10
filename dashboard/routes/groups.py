@@ -1,10 +1,12 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from telethon.tl.types import Channel, Chat
 import config
 import state
 from db.operations import (
     list_monitored_groups,
     add_joined_group, list_joined_groups, remove_joined_group,
+    list_joined_group_telegram_ids,
 )
 
 router = APIRouter()
@@ -47,6 +49,37 @@ async def leave_group(group_id: int):
 
     await remove_joined_group(config.DB_PATH, group_id)
     return {"status": "ok"}
+
+
+# ── Sync existing Telegram memberships ────────────────────────────
+@router.post("/api/groups/sync")
+async def sync_groups():
+    client = state.tg_client
+    if client is None:
+        raise HTTPException(503, "Parser not connected to Telegram — configure credentials first")
+
+    try:
+        dialogs = await client.get_dialogs()
+    except Exception as exc:
+        raise HTTPException(500, str(exc))
+
+    existing_ids = await list_joined_group_telegram_ids(config.DB_PATH)
+    added = 0
+    for dialog in dialogs:
+        entity = dialog.entity
+        if not isinstance(entity, (Channel, Chat)):
+            continue
+        telegram_id = entity.id
+        if telegram_id in existing_ids:
+            continue
+        title = getattr(entity, "title", "") or ""
+        handle = getattr(entity, "username", None) or ""
+        member_count = getattr(entity, "participants_count", 0) or 0
+        await add_joined_group(config.DB_PATH, telegram_id, title, handle, member_count)
+        existing_ids.add(telegram_id)
+        added += 1
+
+    return {"synced": added}
 
 
 # ── Search public groups ───────────────────────────────────────────
