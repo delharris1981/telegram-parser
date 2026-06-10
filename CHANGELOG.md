@@ -4,6 +4,11 @@ All notable changes to TeleListener are documented here.
 
 ## [Unreleased]
 
+## [1.6] – 2026-06-10
+
+### Fixed
+- **Docker missing `state.py`** – `state.py` was not copied into the image, causing `ModuleNotFoundError: No module named 'state'` on startup. Added to the `COPY` line in `Dockerfile`.
+
 ## [1.5] – 2026-06-10
 
 ### Added
