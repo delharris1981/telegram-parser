@@ -24,7 +24,7 @@ if "DB_PATH" in os.environ:
 elif getattr(sys, "frozen", False):
     DB_PATH = str(pathlib.Path(sys.executable).parent / "db" / "telelistener.db")
 else:
-    DB_PATH = "db/telelistener.db"
+    DB_PATH = "data/telelistener.db"
 
 _proxy_type = os.getenv("PROXY_TYPE", "").lower()
 _proxy_host = os.getenv("PROXY_HOST", "")

@@ -4,6 +4,15 @@ All notable changes to TeleListener are documented here.
 
 ## [Unreleased]
 
+## [1.5] – 2026-06-10
+
+### Added
+- **GitHub Actions Docker job** – CI now builds and pushes three images (`telegram-parser`, `telegram-parser-parser`, `telegram-parser-dashboard`) to GitHub Container Registry (`ghcr.io`) on every push to `main`, tagged `latest` and the versioned release tag.
+- **Pre-built Docker image docs** – README updated with GHCR pull instructions for Option C and Option E (VPS), including pinning to a specific version tag and `docker-compose pull` update workflow.
+
+### Fixed
+- **Docker volume shadowing `db/` package** – the `db_data` volume was mounted at `/app/db`, overwriting the `db/` Python package at runtime and causing `ModuleNotFoundError: No module named 'db.init'`. Volume mount moved to `/app/data`; default `DB_PATH` updated to `data/telelistener.db`; Dockerfile pre-creates `/app/data`.
+
 ## [1.4] – 2026-06-09
 
 ### Added

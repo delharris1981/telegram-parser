@@ -19,7 +19,8 @@ A Telegram keyword monitoring UserBot with a FastAPI web dashboard. Monitors pub
 - **Proxy support** — SOCKS5 / HTTP proxy configurable from the dashboard
 - **SQLite WAL mode** — safe concurrent access between the parser and the dashboard
 - **Docker Compose** — one command to run the full stack
-- **GitHub Actions CI** — auto-builds standalone macOS and Windows binaries on every push
+- **Pre-built Docker images** — published to GitHub Container Registry on every release
+- **GitHub Actions CI** — auto-builds standalone macOS and Windows binaries and Docker images on every push
 
 ---
 
@@ -77,9 +78,41 @@ The database and session file are stored in a `db\` folder next to the `.exe`.
 
 ### Option C — Docker
 
-Docker is the recommended approach for running TeleListener on a server.
+Docker is the recommended approach for running TeleListener on a server. Pre-built images are published to the GitHub Container Registry on every release — no cloning or building required.
 
 **Requirements:** Docker + Docker Compose
+
+#### C1 — Pull the pre-built image (recommended)
+
+Create a `docker-compose.yml` in an empty folder:
+
+```yaml
+version: "3.9"
+
+services:
+  telelistener:
+    image: ghcr.io/delharris1981/telegram-parser:latest
+    volumes:
+      - db_data:/app/data
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+volumes:
+  db_data:
+```
+
+Then start it:
+
+```bash
+docker-compose up
+```
+
+The dashboard is available at **[http://localhost:8000](http://localhost:8000)**.
+
+To pin to a specific release instead of `latest`, replace the tag (e.g. `ghcr.io/delharris1981/telegram-parser:v1.4.42`). All available tags are listed on the [packages page](https://github.com/delharris1981?tab=packages).
+
+#### C2 — Build from source
 
 ```bash
 git clone https://github.com/delharris1981/telegram-parser.git
@@ -87,7 +120,7 @@ cd telegram-parser
 docker-compose up --build
 ```
 
-The dashboard is available at **[http://localhost:8000](http://localhost:8000)**.
+---
 
 > **First-time Telegram authentication:** Telethon requires an interactive phone + code login on the very first run. Keep the terminal open (do **not** use `-d` on first launch) and follow the prompts that appear after you save your API credentials in Settings. Once the session file is written, you can restart with `docker-compose up -d` for headless operation.
 
@@ -96,6 +129,9 @@ The database is stored in a named Docker volume (`db_data`) so it survives conta
 **Useful commands:**
 
 ```bash
+# Pull the latest image
+docker pull ghcr.io/delharris1981/telegram-parser:latest
+
 # Start in background (after first auth is done)
 docker-compose up -d
 
@@ -132,7 +168,7 @@ The dashboard starts on **[http://localhost:8000](http://localhost:8000)**.
 
 ### Option E — Self-hosting on a VPS (Linux server)
 
-Running TeleListener on a Linux VPS (Ubuntu/Debian) with Docker is the simplest approach:
+Running TeleListener on a Linux VPS (Ubuntu/Debian) with Docker is the simplest approach. The pre-built image means you don't need to clone the repo or install Python.
 
 ```bash
 # Install Docker (Ubuntu/Debian)
@@ -140,10 +176,27 @@ curl -fsSL https://get.docker.com | sh
 sudo usermod -aG docker $USER
 newgrp docker
 
-# Clone and run
-git clone https://github.com/delharris1981/telegram-parser.git
-cd telegram-parser
-docker-compose up --build
+# Create a working directory
+mkdir telelistener && cd telelistener
+
+# Create docker-compose.yml
+cat > docker-compose.yml <<'EOF'
+version: "3.9"
+
+services:
+  telelistener:
+    image: ghcr.io/delharris1981/telegram-parser:latest
+    volumes:
+      - db_data:/app/data
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+volumes:
+  db_data:
+EOF
+
+docker-compose up
 ```
 
 Complete first-time Telegram authentication in the terminal (phone + SMS code), then detach:
@@ -151,6 +204,12 @@ Complete first-time Telegram authentication in the terminal (phone + SMS code), 
 ```bash
 # Ctrl+C to stop, then restart in background
 docker-compose up -d
+```
+
+To update to the latest image in future:
+
+```bash
+docker-compose pull && docker-compose up -d
 ```
 
 **Expose the dashboard publicly** (optional) using a reverse proxy. Example with nginx:
@@ -281,16 +340,26 @@ SQLite is configured in **WAL mode** so the parser and dashboard can access the 
 
 ---
 
-## Building binaries
+## Building binaries and Docker images
 
-GitHub Actions builds binaries automatically on every push to `main`. Download the latest from the [Releases](https://github.com/delharris1981/telegram-parser/releases) page.
+GitHub Actions builds both standalone binaries and Docker images automatically on every push to `main`.
 
-To build locally:
+- **Binaries** — download the latest from the [Releases](https://github.com/delharris1981/telegram-parser/releases) page.
+- **Docker images** — published to the [GitHub Container Registry](https://github.com/delharris1981?tab=packages) as `ghcr.io/delharris1981/telegram-parser:latest`.
+
+To build a binary locally:
 
 ```bash
 pip install -r requirements.txt
 pyinstaller telelistener.spec
 # Output: dist/telelistener  (macOS/Linux)  or  dist/telelistener.exe  (Windows)
+```
+
+To build the Docker image locally:
+
+```bash
+docker build -t telelistener .
+docker run -p 8000:8000 -v telelistener_db:/app/data telelistener
 ```
 
 ---

@@ -46,6 +46,54 @@ jobs:
           name: telelistener-${{ matrix.os }}
           path: dist/
 
+  docker:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        include:
+          - dockerfile: Dockerfile
+            image: ghcr.io/delharris1981/telegram-parser
+          - dockerfile: Dockerfile.parser
+            image: ghcr.io/delharris1981/telegram-parser-parser
+          - dockerfile: Dockerfile.dashboard
+            image: ghcr.io/delharris1981/telegram-parser-dashboard
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read version
+        id: version
+        run: echo "tag=v$(cat VERSION).${{ github.run_number }}" >> $GITHUB_OUTPUT
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ matrix.image }}
+          tags: |
+            type=raw,value=latest
+            type=raw,value=${{ steps.version.outputs.tag }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
   release:
     needs: build
     runs-on: ubuntu-latest
