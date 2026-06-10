@@ -4,6 +4,11 @@ All notable changes to TeleListener are documented here.
 
 ## [Unreleased]
 
+## [1.7] – 2026-06-10
+
+### Added
+- **`auth.py` interactive auth helper** – standalone script for completing first-time Telegram phone/code authentication in headless environments (Unraid, VPS, Docker without a TTY). Run with `docker-compose run --rm telelistener python auth.py` after configuring credentials in Settings.
+
 ## [1.6] – 2026-06-10
 
 ### Fixed
