@@ -4,6 +4,11 @@ All notable changes to TeleListener are documented here.
 
 ## [Unreleased]
 
+## [1.8] – 2026-06-10
+
+### Fixed
+- **`auth.py` always reported "No API credentials found"** – was calling `get_settings()` which only returns notification fields, not API credentials. Fixed to call `get_api_config()`. Also falls back to env vars (`TELEGRAM_API_ID` / `TELEGRAM_API_HASH`) if the DB row is empty.
+
 ## [1.7] – 2026-06-10
 
 ### Added
