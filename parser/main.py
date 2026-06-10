@@ -11,6 +11,7 @@ from db.init import init_db
 from db.operations import (
     get_auto_discovery_settings, list_keywords,
     list_joined_group_telegram_ids, add_joined_group, set_auto_discovery_last_run,
+    purge_old_hits,
 )
 from parser.auto_join import join_groups_with_flood_protection, is_russian_group
 from parser.client import create_client, on_new_message
@@ -25,6 +26,22 @@ logger = logging.getLogger(__name__)
 RECONNECT_DELAY = 10
 CREDENTIALS_RETRY = 30
 DISCOVERY_IDLE_CHECK = 300  # seconds to wait when disabled or no keywords
+HIT_RETENTION_DAYS = 7
+HIT_RETENTION_INTERVAL = 3600  # purge check every hour
+
+
+async def run_retention_purge() -> None:
+    """Delete parsed_hits older than HIT_RETENTION_DAYS, checked once per hour."""
+    while True:
+        try:
+            deleted = await purge_old_hits(config.DB_PATH, HIT_RETENTION_DAYS)
+            if deleted:
+                logger.info("Retention purge: removed %d hit(s) older than %d days.", deleted, HIT_RETENTION_DAYS)
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            logger.exception("Retention purge error: %s", exc)
+        await asyncio.sleep(HIT_RETENTION_INTERVAL)
 
 
 async def run_auto_discovery(client) -> None:
@@ -162,7 +179,15 @@ async def run_parser_loop() -> None:
 
 async def main() -> None:
     await init_db(config.DB_PATH)
-    await run_parser_loop()
+    retention_task = asyncio.create_task(run_retention_purge())
+    try:
+        await run_parser_loop()
+    finally:
+        retention_task.cancel()
+        try:
+            await retention_task
+        except asyncio.CancelledError:
+            pass
 
 
 if __name__ == "__main__":

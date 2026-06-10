@@ -4,6 +4,11 @@ All notable changes to TeleListener are documented here.
 
 ## [Unreleased]
 
+## [2.1] – 2026-06-10
+
+### Added
+- **7-day hit retention** – a background task runs hourly and automatically deletes `parsed_hits` rows older than 7 days, keeping the database lean without manual intervention. Applies to all deployment targets: macOS binary, Windows binary, and Docker. The retention window is controlled by `HIT_RETENTION_DAYS` in `parser/main.py`.
+
 ## [2.0] – 2026-06-10
 
 ### Added

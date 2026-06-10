@@ -196,6 +196,16 @@ async def list_joined_group_telegram_ids(db_path: str) -> set:
     return {r["telegram_id"] for r in rows}
 
 
+async def purge_old_hits(db_path: str, days: int = 7) -> int:
+    async with aiosqlite.connect(db_path, timeout=10.0) as db:
+        cursor = await db.execute(
+            "DELETE FROM parsed_hits WHERE captured_at < datetime('now', ? || ' days')",
+            (f"-{days}",),
+        )
+        await db.commit()
+        return cursor.rowcount
+
+
 # --- Settings ---
 
 async def get_settings(db_path: str) -> Optional[dict]:

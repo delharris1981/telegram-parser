@@ -17,6 +17,7 @@ A Telegram keyword monitoring UserBot with a FastAPI web dashboard. Monitors pub
 - **Inline credential setup** — enter API credentials directly in the Settings page; no `.env` editing
 - **Telegram notifications** — optional real-time alerts to any handle, group ID, or `me` (Saved Messages)
 - **Proxy support** — SOCKS5 / HTTP proxy configurable from the dashboard
+- **7-day hit retention** — parsed hits older than 7 days are automatically purged hourly, keeping the database size in check
 - **SQLite WAL mode** — safe concurrent access between the parser and the dashboard
 - **Docker Compose** — one command to run the full stack
 - **Pre-built Docker images** — published to GitHub Container Registry on every release
@@ -337,6 +338,8 @@ settings          (id, tg_notifications_enabled, tg_notification_destination,
 ```
 
 SQLite is configured in **WAL mode** so the parser and dashboard can access the database concurrently without locking conflicts.
+
+Parsed hits older than **7 days** are automatically deleted by a background task that runs every hour. To change the window, edit `HIT_RETENTION_DAYS` in `parser/main.py`.
 
 ---
 
