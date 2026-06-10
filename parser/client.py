@@ -1,4 +1,5 @@
 import logging
+import os
 from telethon import TelegramClient
 from telethon.errors import FloodWaitError
 import asyncio
@@ -35,7 +36,8 @@ async def create_client() -> TelegramClient:
             "Set them in the dashboard (Settings → API Credentials) or via .env."
         )
 
-    return TelegramClient(session_name, api_id, api_hash, proxy=proxy)
+    session_path = os.path.join("data", session_name)
+    return TelegramClient(session_path, api_id, api_hash, proxy=proxy)
 
 
 async def on_new_message(event, client: TelegramClient) -> None:

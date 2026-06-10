@@ -4,6 +4,11 @@ All notable changes to TeleListener are documented here.
 
 ## [Unreleased]
 
+## [1.9] – 2026-06-10
+
+### Fixed
+- **Parser never found the saved session** – `create_client()` passed the bare session name to Telethon (resolving to `/app/telelistener.session`) while `auth.py` saved to `/app/data/telelistener.session`. Parser now uses `data/{session_name}` consistently with `auth.py`.
+
 ## [1.8] – 2026-06-10
 
 ### Fixed
