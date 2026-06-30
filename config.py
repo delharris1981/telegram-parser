@@ -33,3 +33,15 @@ _proxy_port = os.getenv("PROXY_PORT", "")
 PROXY = None
 if _proxy_type and _proxy_host and _proxy_port:
     PROXY = (_proxy_type, _proxy_host, int(_proxy_port))
+
+SESSION_SECRET = os.getenv("SESSION_SECRET", "")
+if not SESSION_SECRET:
+    import warnings
+    warnings.warn(
+        "SESSION_SECRET is not set. Sessions will not be secure. "
+        "Set a strong random value via the SESSION_SECRET environment variable.",
+        stacklevel=2,
+    )
+SESSION_SECRET = SESSION_SECRET or "dev-secret-change-me"
+
+USERS_DB_PATH = os.getenv("USERS_DB_PATH", "data/users.db")
