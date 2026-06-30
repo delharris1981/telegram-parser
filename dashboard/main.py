@@ -12,6 +12,7 @@ import config
 from dashboard.auth import require_auth, require_admin
 from dashboard.routes import hits, keywords, groups
 from dashboard.routes import settings as settings_router
+from dashboard.routes import parser as parser_router
 from db.users import init_users_db, get_user_by_username, create_user
 from db.init import init_db
 
@@ -46,6 +47,7 @@ app.include_router(hits.router)
 app.include_router(keywords.router)
 app.include_router(groups.router)
 app.include_router(settings_router.router)
+app.include_router(parser_router.router)
 
 
 @app.get("/login", response_class=HTMLResponse)
