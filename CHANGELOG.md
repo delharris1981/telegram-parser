@@ -4,6 +4,11 @@ All notable changes to TeleListener are documented here.
 
 ## [Unreleased]
 
+## [2.2] – 2026-06-30
+
+### Added
+- **Project docs** – added `CLAUDE.md` project instructions, `docs/superpowers/plans/` implementation plan, project spec (`gemini-code-1781011376559.md`), and `graphify-out/` knowledge graph output.
+
 ## [2.1] – 2026-06-10
 
 ### Added

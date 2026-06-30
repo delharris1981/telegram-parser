@@ -1,0 +1,227 @@
+{
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/config.py": {
+    "mtime": 1781020874.1558254,
+    "ast_hash": "413fb519aaf40e3276fa65dc58817fed",
+    "semantic_hash": "413fb519aaf40e3276fa65dc58817fed"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/main.py": {
+    "mtime": 1781021388.8280108,
+    "ast_hash": "29dc9723a8d6a30686af28750a8cc320",
+    "semantic_hash": "29dc9723a8d6a30686af28750a8cc320"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/state.py": {
+    "mtime": 1781034100.8753452,
+    "ast_hash": "f25ea43fbcbdbbafeb32fd061967479e",
+    "semantic_hash": "f25ea43fbcbdbbafeb32fd061967479e"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/tests/test_routes_management.py": {
+    "mtime": 1781015195.826703,
+    "ast_hash": "be8bc343ee19a5367a3f3753e0790f42",
+    "semantic_hash": "be8bc343ee19a5367a3f3753e0790f42"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/tests/conftest.py": {
+    "mtime": 1781012420.4561408,
+    "ast_hash": "59453a793d74878448eed8db66c43552",
+    "semantic_hash": "59453a793d74878448eed8db66c43552"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/tests/test_handlers.py": {
+    "mtime": 1781013415.8958056,
+    "ast_hash": "dd88f9f0709ca3792a9c55ccf00a28a0",
+    "semantic_hash": "dd88f9f0709ca3792a9c55ccf00a28a0"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/tests/test_dashboard_auth.py": {
+    "mtime": 1781014735.5190413,
+    "ast_hash": "11b714b8d88a0e1a2321b7ded282b365",
+    "semantic_hash": "11b714b8d88a0e1a2321b7ded282b365"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/tests/test_auto_join.py": {
+    "mtime": 1781014078.104743,
+    "ast_hash": "2b7aeb57e139f901bf2726ab9db39b48",
+    "semantic_hash": "2b7aeb57e139f901bf2726ab9db39b48"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/tests/__init__.py": {
+    "mtime": 1781012307.828714,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/tests/test_db_operations.py": {
+    "mtime": 1781013065.6811528,
+    "ast_hash": "6f9f54a9c44160c7561c25de836f0cf1",
+    "semantic_hash": "6f9f54a9c44160c7561c25de836f0cf1"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/tests/test_notifications.py": {
+    "mtime": 1781014416.43521,
+    "ast_hash": "40f1469b799f01150667720436943ade",
+    "semantic_hash": "40f1469b799f01150667720436943ade"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/tests/test_routes_hits.py": {
+    "mtime": 1781015040.2611456,
+    "ast_hash": "0d474d8ae43cf87c9e2a71abb443074d",
+    "semantic_hash": "0d474d8ae43cf87c9e2a71abb443074d"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/tests/test_db_init.py": {
+    "mtime": 1781035021.993072,
+    "ast_hash": "227f2c2311d56b4578ac8265338cb6d0",
+    "semantic_hash": "227f2c2311d56b4578ac8265338cb6d0"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/.claude/settings.local.json": {
+    "mtime": 1781012454.2502604,
+    "ast_hash": "93fb334ff96869d8a0b33383a06ca083",
+    "semantic_hash": "93fb334ff96869d8a0b33383a06ca083"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/parser/client.py": {
+    "mtime": 1781038436.5999181,
+    "ast_hash": "480b54571ef1e6a078013c754d7a98dc",
+    "semantic_hash": "480b54571ef1e6a078013c754d7a98dc"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/parser/handlers.py": {
+    "mtime": 1781013222.3066385,
+    "ast_hash": "213db585f271f1da1f8c253c18214226",
+    "semantic_hash": "213db585f271f1da1f8c253c18214226"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/parser/__init__.py": {
+    "mtime": 1781012307.8284335,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/parser/auto_join.py": {
+    "mtime": 1781038401.8112047,
+    "ast_hash": "735928fc753e9f14066e5c0d0cbeac0d",
+    "semantic_hash": "735928fc753e9f14066e5c0d0cbeac0d"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/parser/notifications.py": {
+    "mtime": 1781014224.6061704,
+    "ast_hash": "a4a64c6b8a279a5675069e32c63c987f",
+    "semantic_hash": "a4a64c6b8a279a5675069e32c63c987f"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/parser/main.py": {
+    "mtime": 1781035593.9258552,
+    "ast_hash": "59b1599ed57a899dede6e7a4860d6bd2",
+    "semantic_hash": "59b1599ed57a899dede6e7a4860d6bd2"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/dashboard/auth.py": {
+    "mtime": 1781014752.3430238,
+    "ast_hash": "c9248cbb4e5f489a02ce6212484711e7",
+    "semantic_hash": "c9248cbb4e5f489a02ce6212484711e7"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/dashboard/__init__.py": {
+    "mtime": 1781012307.8286073,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/dashboard/main.py": {
+    "mtime": 1781019117.2175188,
+    "ast_hash": "b86fc41343e164057b2351f92b4afdca",
+    "semantic_hash": "b86fc41343e164057b2351f92b4afdca"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/dashboard/sanitize.py": {
+    "mtime": 1781014756.9043665,
+    "ast_hash": "d8a0f7241724e386b34b33761c7656b8",
+    "semantic_hash": "d8a0f7241724e386b34b33761c7656b8"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/dashboard/routes/keywords.py": {
+    "mtime": 1781022265.3742318,
+    "ast_hash": "0504b32bbe7e32682da8cb8757199c35",
+    "semantic_hash": "0504b32bbe7e32682da8cb8757199c35"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/dashboard/routes/__init__.py": {
+    "mtime": 1781012307.8286617,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/dashboard/routes/groups.py": {
+    "mtime": 1781038413.1162236,
+    "ast_hash": "71f8880ca88978947ef094915ad25d98",
+    "semantic_hash": "71f8880ca88978947ef094915ad25d98"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/dashboard/routes/settings.py": {
+    "mtime": 1781035615.915015,
+    "ast_hash": "d17371a5a59476fa5148d4210a11b54f",
+    "semantic_hash": "d17371a5a59476fa5148d4210a11b54f"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/dashboard/routes/hits.py": {
+    "mtime": 1781022270.6243744,
+    "ast_hash": "d888cd786ebb4a41c97ccc49269159ba",
+    "semantic_hash": "d888cd786ebb4a41c97ccc49269159ba"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/db/__init__.py": {
+    "mtime": 1781012307.828536,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/db/operations.py": {
+    "mtime": 1781038417.8158226,
+    "ast_hash": "9528a5434e15f7e27f43932c00fe4432",
+    "semantic_hash": "9528a5434e15f7e27f43932c00fe4432"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/db/init.py": {
+    "mtime": 1781035548.94463,
+    "ast_hash": "19bad1bc5f253cfabef97b4ab5d223e6",
+    "semantic_hash": "19bad1bc5f253cfabef97b4ab5d223e6"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/requirements.txt": {
+    "mtime": 1781012318.334315,
+    "ast_hash": "dc7d35c6d1fb3c94225dc2906daa5eb6",
+    "semantic_hash": "dc7d35c6d1fb3c94225dc2906daa5eb6"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/CHANGELOG.md": {
+    "mtime": 1781035661.802451,
+    "ast_hash": "a9f1ad37b546330f49f5f5c7c4b2e618",
+    "semantic_hash": "a9f1ad37b546330f49f5f5c7c4b2e618"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/README.md": {
+    "mtime": 1781036525.9214787,
+    "ast_hash": "934adf38e1114ef08b5a6947cb383312",
+    "semantic_hash": "934adf38e1114ef08b5a6947cb383312"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/docker-compose.yml": {
+    "mtime": 1781019154.2592936,
+    "ast_hash": "5d3e045867810666e3204de4e96b6976",
+    "semantic_hash": "5d3e045867810666e3204de4e96b6976"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/gemini-code-1781011376559.md": {
+    "mtime": 1781011376.5618074,
+    "ast_hash": "d394cf32456911029a5b6c068b2de3e9",
+    "semantic_hash": "d394cf32456911029a5b6c068b2de3e9"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/CLAUDE.md": {
+    "mtime": 1780954240.52616,
+    "ast_hash": "8e6e00e4615aaaeaa5f1a1cb817c980f",
+    "semantic_hash": "8e6e00e4615aaaeaa5f1a1cb817c980f"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/docs/superpowers/plans/2026-06-09-telelistener-ru.md": {
+    "mtime": 1781012065.8041027,
+    "ast_hash": "9914b888e54e299b0ee2f59802d25477",
+    "semantic_hash": "9914b888e54e299b0ee2f59802d25477"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/dashboard/templates/keywords.html": {
+    "mtime": 1781022379.76272,
+    "ast_hash": "58e11575efa2baab0c914fd88b12ff4a",
+    "semantic_hash": "58e11575efa2baab0c914fd88b12ff4a"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/dashboard/templates/index.html": {
+    "mtime": 1781022354.1698036,
+    "ast_hash": "0546b1c00b34322556a57b5d884b8833",
+    "semantic_hash": "0546b1c00b34322556a57b5d884b8833"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/dashboard/templates/base.html": {
+    "mtime": 1781022329.214137,
+    "ast_hash": "8971ad33e0b281b2ad58197952f0f458",
+    "semantic_hash": "8971ad33e0b281b2ad58197952f0f458"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/dashboard/templates/groups.html": {
+    "mtime": 1781034218.742664,
+    "ast_hash": "d3e842d8a20bd653ea6f773dbf1ff5f3",
+    "semantic_hash": "d3e842d8a20bd653ea6f773dbf1ff5f3"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/dashboard/templates/settings.html": {
+    "mtime": 1781035642.8774729,
+    "ast_hash": "b6961be1f5e5c177dd2256f1020ae2aa",
+    "semantic_hash": "b6961be1f5e5c177dd2256f1020ae2aa"
+  },
+  "/Users/derek/Documents/Projects/Standalone/telegram parser/.github/workflows/build.yml": {
+    "mtime": 1781020126.9276242,
+    "ast_hash": "f63feca2a0859c8b49e674ed17cb3321",
+    "semantic_hash": "f63feca2a0859c8b49e674ed17cb3321"
+  }
+}
