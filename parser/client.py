@@ -1,9 +1,8 @@
 import logging
-import os
+import pathlib
+from typing import Optional
 from telethon import TelegramClient
 from telethon.errors import FloodWaitError
-import asyncio
-from typing import Optional
 
 import config
 from db.operations import (
@@ -16,13 +15,16 @@ from parser.notifications import build_notification_text, send_notification
 logger = logging.getLogger(__name__)
 
 
-async def create_client() -> TelegramClient:
-    """Build TelegramClient, preferring DB-stored credentials over env vars."""
-    db_cfg = await get_api_config(config.DB_PATH)
+async def create_client(db_path: str) -> TelegramClient:
+    """Build TelegramClient from credentials stored in db_path, with env var fallback."""
+    db_cfg = await get_api_config(db_path)
 
     api_id = (db_cfg["api_id"] if db_cfg and db_cfg["api_id"] else None) or config.API_ID
     api_hash = (db_cfg["api_hash"] if db_cfg and db_cfg["api_hash"] else None) or config.API_HASH
-    session_name = (db_cfg["session_name"] if db_cfg and db_cfg["session_name"] else None) or config.SESSION_NAME
+    session_name = (
+        (db_cfg["session_name"] if db_cfg and db_cfg["session_name"] else None)
+        or config.SESSION_NAME
+    )
 
     proxy: Optional[tuple] = None
     if db_cfg and db_cfg["proxy_type"] and db_cfg["proxy_host"] and db_cfg["proxy_port"]:
@@ -36,11 +38,12 @@ async def create_client() -> TelegramClient:
             "Set them in the dashboard (Settings → API Credentials) or via .env."
         )
 
-    session_path = os.path.join("data", session_name)
+    session_dir = str(pathlib.Path(db_path).parent)
+    session_path = f"{session_dir}/{session_name}"
     return TelegramClient(session_path, api_id, api_hash, proxy=proxy)
 
 
-async def on_new_message(event, client: TelegramClient) -> None:
+async def on_new_message(event, client: TelegramClient, db_path: str) -> None:
     msg = event.message
     text = msg.raw_text or ""
 
@@ -50,8 +53,6 @@ async def on_new_message(event, client: TelegramClient) -> None:
         return
 
     sender = await event.get_sender()
-    # sender is None for anonymous group admins; fall back to the chat entity so
-    # we still record the hit rather than silently dropping it.
     if sender is None:
         sender = await event.get_chat()
     if sender is None:
@@ -59,7 +60,7 @@ async def on_new_message(event, client: TelegramClient) -> None:
     if getattr(sender, "bot", False):
         return
 
-    keywords = [k["phrase"] for k in await list_keywords(config.DB_PATH)]
+    keywords = [k["phrase"] for k in await list_keywords(db_path)]
     matched = find_keyword_match(text, keywords)
 
     chat = await event.get_chat()
@@ -73,8 +74,8 @@ async def on_new_message(event, client: TelegramClient) -> None:
 
     logger.info("Keyword match: %r in %s", matched, title)
 
-    await add_monitored_group(config.DB_PATH, telegram_id=telegram_id, title=title, handle=handle)
-    group = await get_group_by_telegram_id(config.DB_PATH, telegram_id)
+    await add_monitored_group(db_path, telegram_id=telegram_id, title=title, handle=handle)
+    group = await get_group_by_telegram_id(db_path, telegram_id)
     if group is None:
         logger.error("group not found after add_monitored_group for telegram_id=%s", telegram_id)
         return
@@ -84,7 +85,7 @@ async def on_new_message(event, client: TelegramClient) -> None:
     sender_id = getattr(sender, "id", 0)
 
     await add_hit(
-        config.DB_PATH,
+        db_path,
         group_id=group["id"],
         sender_id=sender_id,
         username=username,
@@ -94,14 +95,11 @@ async def on_new_message(event, client: TelegramClient) -> None:
     )
     logger.info("Hit saved: keyword=%r group=%s user=%s", matched, title, username or sender_id)
 
-    settings = await get_settings(config.DB_PATH)
+    settings = await get_settings(db_path)
     if settings and settings["tg_notifications_enabled"]:
         notification = build_notification_text(
-            keyword=matched,
-            group_title=title,
-            username=username,
-            sender_id=sender_id,
-            first_name=first_name,
-            comment=text,
+            keyword=matched, group_title=title,
+            username=username, sender_id=sender_id,
+            first_name=first_name, comment=text,
         )
         await send_notification(client, settings["tg_notification_destination"], notification)
