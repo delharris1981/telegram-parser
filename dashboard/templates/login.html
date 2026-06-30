@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TeleListener — Sign In</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #2563eb; --primary-h: #1d4ed8;
+      --bg: #f1f5f9; --surface: #ffffff;
+      --border: #e2e8f0; --text: #0f172a; --danger: #dc2626;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 36px; width: 360px;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; }
+    .logo-box {
+      width: 32px; height: 32px; background: var(--primary);
+      border-radius: 8px; display: flex; align-items: center;
+      justify-content: center; font-weight: 800; font-size: 14px; color: #fff;
+    }
+    .logo-name { font-weight: 700; font-size: 16px; }
+    h2 { font-size: 18px; font-weight: 700; margin-bottom: 22px; }
+    label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 5px; }
+    .form-group { margin-bottom: 16px; }
+    input[type=text], input[type=password] {
+      width: 100%; padding: 8px 11px; border: 1px solid var(--border);
+      border-radius: 7px; font-size: 13px; outline: none;
+      transition: border .14s, box-shadow .14s;
+    }
+    input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+    .btn {
+      width: 100%; padding: 9px; background: var(--primary); color: #fff;
+      border: none; border-radius: 7px; font-size: 14px; font-weight: 600;
+      cursor: pointer; margin-top: 4px; transition: background .14s;
+    }
+    .btn:hover { background: var(--primary-h); }
+    .error {
+      background: #fef2f2; color: var(--danger); border: 1px solid #fecaca;
+      border-radius: 7px; padding: 10px 14px; font-size: 13px; margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-box">TL</div>
+    <span class="logo-name">TeleListener</span>
+  </div>
+  <h2>Sign in</h2>
+  {% if error %}
+  <div class="error">{{ error }}</div>
+  {% endif %}
+  <form method="post" action="/login">
+    <div class="form-group">
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username" required autofocus>
+    </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" required>
+    </div>
+    <button type="submit" class="btn">Sign in</button>
+  </form>
+</div>
+</body>
+</html>

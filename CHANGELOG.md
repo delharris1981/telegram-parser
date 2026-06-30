@@ -4,6 +4,17 @@ All notable changes to TeleListener are documented here.
 
 ## [Unreleased]
 
+## [2.3] – 2026-06-30
+
+### Added
+- **Session-based auth** – `dashboard/main.py` now mounts `SessionMiddleware`, seeds the admin user on startup via `lifespan`, and provides `GET /login`, `POST /login`, and `GET /logout` routes.
+- **Login page** – `dashboard/templates/login.html` minimal sign-in form.
+- **Nav updates** – `base.html` nav now shows username, Logout link, Admin link (user_id=1 only), and dynamic parser status pill with start/stop toggle.
+
+### Changed
+- API routers included without global `require_auth` dependency; per-route auth handled within each router (Tasks 7/8).
+- `requirements.txt` pins `bcrypt==4.0.1` for passlib 1.7.4 compatibility.
+
 ## [2.2] – 2026-06-30
 
 ### Added

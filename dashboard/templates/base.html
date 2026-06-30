@@ -287,7 +287,14 @@
   <a href="/groups"    class="nav-link" id="nl-grp">Groups</a>
   <a href="/settings"  class="nav-link" id="nl-set">Settings</a>
   <div class="nav-gap"></div>
-  <div class="nav-pill"><div class="pulse"></div><span>Live</span></div>
+  {% if user is defined and user and user.user_id == 1 %}
+  <a href="/admin/users" class="nav-link" id="nl-admin">Admin</a>
+  {% endif %}
+  <a href="/account" class="nav-link" id="nl-acct">{{ user.username if user is defined and user else '' }}</a>
+  <a href="/logout" class="nav-link" style="color:#64748b;">Logout</a>
+  <div class="nav-pill" id="parser-pill" style="cursor:pointer;" onclick="toggleParser()" title="Click to start/stop parser">
+    <div class="pulse" id="ps-dot"></div><span id="ps-label">—</span>
+  </div>
 </nav>
 
 <div class="page">
@@ -303,6 +310,26 @@
   else if (_p.startsWith('/keywords')) document.getElementById('nl-kw').classList.add('active');
   else if (_p.startsWith('/groups'))   document.getElementById('nl-grp').classList.add('active');
   else if (_p.startsWith('/settings')) document.getElementById('nl-set').classList.add('active');
+  else if (_p.startsWith('/admin'))   document.getElementById('nl-admin')?.classList.add('active');
+  else if (_p.startsWith('/account')) document.getElementById('nl-acct')?.classList.add('active');
+
+  // Parser status
+  let _parserRunning = false;
+  async function loadParserStatus() {
+    try {
+      const r = await fetch('/api/parser/status').then(r => r.json());
+      _parserRunning = r.status === 'running';
+      document.getElementById('ps-dot').style.background = _parserRunning ? '#22c55e' : '#94a3b8';
+      document.getElementById('ps-label').textContent = _parserRunning ? 'Live' : 'Stopped';
+    } catch (_) {}
+  }
+  async function toggleParser() {
+    const ep = _parserRunning ? '/api/parser/stop' : '/api/parser/start';
+    await fetch(ep, { method: 'POST' }).catch(() => {});
+    await loadParserStatus();
+  }
+  loadParserStatus();
+  setInterval(loadParserStatus, 30000);
 
   // Toast helper
   function toast(msg, ok = true) {
