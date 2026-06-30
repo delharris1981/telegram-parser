@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-hd">
+  <div class="page-title">User Management</div>
+  <div class="page-sub">Create and manage dashboard accounts</div>
+</div>
+
+<div class="card">
+  <div class="card-head"><span class="card-title">Users</span></div>
+  <div class="tbl-wrap" id="user-list">
+    <div class="empty"><div class="empty-msg">Loading…</div></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><span class="card-title">Create User</span></div>
+  <div class="card-body">
+    <div class="form-row">
+      <div class="form-group">
+        <label for="new-username">Username</label>
+        <input type="text" id="new-username" placeholder="alice">
+      </div>
+      <div class="form-group">
+        <label for="new-password">Password</label>
+        <input type="password" id="new-password" placeholder="••••••••">
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="createUser()">Create User</button>
+  </div>
+</div>
+
+<script>
+async function loadUsers() {
+  try {
+    const users = await fetch('/api/admin/users').then(r => r.json());
+    const el = document.getElementById('user-list');
+    if (!users.length) {
+      el.innerHTML = '<div class="empty"><div class="empty-msg">No users.</div></div>';
+      return;
+    }
+    const rows = users.map(u => `<tr>
+      <td class="fw-600">${u.username}</td>
+      <td class="text-muted text-xs">${u.db_path}</td>
+      <td><span class="badge ${u.parser_status === 'running' ? 'badge-green' : 'badge-slate'}">${u.parser_status}</span></td>
+      <td class="text-muted text-xs">${fmt(u.created_at)}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn btn-outline btn-xs" onclick="resetPw(${u.id})">Reset PW</button>
+        ${u.id !== 1 ? `<button class="btn btn-danger btn-xs" style="margin-left:6px;" onclick="delUser(${u.id})">Delete</button>` : ''}
+      </td>
+    </tr>`).join('');
+    el.innerHTML = `<table>
+      <thead><tr><th>Username</th><th>DB Path</th><th>Parser</th><th>Created</th><th>Actions</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  } catch (_) {}
+}
+
+async function createUser() {
+  const username = document.getElementById('new-username').value.trim();
+  const password = document.getElementById('new-password').value;
+  if (!username || !password) { toast('Username and password required', false); return; }
+  const r = await fetch('/api/admin/users', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({username, password}),
+  });
+  if (r.ok) {
+    document.getElementById('new-username').value = '';
+    document.getElementById('new-password').value = '';
+    toast('User created');
+    loadUsers();
+  } else {
+    const err = await r.json().catch(() => ({}));
+    toast(err.detail || 'Failed to create user', false);
+  }
+}
+
+async function delUser(id) {
+  if (!confirm('Delete this user? Their data files remain on disk.')) return;
+  const r = await fetch('/api/admin/users/' + id, {method: 'DELETE'});
+  r.ok ? (toast('User deleted'), loadUsers()) : toast('Failed', false);
+}
+
+async function resetPw(id) {
+  const pw = prompt('New password for user ' + id + ':');
+  if (!pw) return;
+  const r = await fetch('/api/admin/users/' + id + '/password', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({password: pw}),
+  });
+  r.ok ? toast('Password updated') : toast('Failed', false);
+}
+
+loadUsers();
+</script>
+{% endblock %}

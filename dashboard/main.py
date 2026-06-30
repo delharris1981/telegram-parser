@@ -13,6 +13,7 @@ from dashboard.auth import require_auth, require_admin
 from dashboard.routes import hits, keywords, groups
 from dashboard.routes import settings as settings_router
 from dashboard.routes import parser as parser_router
+from dashboard.routes import admin as admin_router
 from db.users import init_users_db, get_user_by_username, create_user
 from db.init import init_db
 
@@ -48,6 +49,7 @@ app.include_router(keywords.router)
 app.include_router(groups.router)
 app.include_router(settings_router.router)
 app.include_router(parser_router.router)
+app.include_router(admin_router.router)
 
 
 @app.get("/login", response_class=HTMLResponse)
@@ -99,3 +101,13 @@ async def groups_page(request: Request, user: dict = Depends(require_auth)):
 @app.get("/settings", response_class=HTMLResponse)
 async def settings_page(request: Request, user: dict = Depends(require_auth)):
     return templates.TemplateResponse(request, "settings.html", {"user": user})
+
+
+@app.get("/admin/users", response_class=HTMLResponse)
+async def admin_users_page(request: Request, user: dict = Depends(require_admin)):
+    return templates.TemplateResponse(request, "admin_users.html", {"user": user})
+
+
+@app.get("/account", response_class=HTMLResponse)
+async def account_page(request: Request, user: dict = Depends(require_auth)):
+    return templates.TemplateResponse(request, "account.html", {"user": user})

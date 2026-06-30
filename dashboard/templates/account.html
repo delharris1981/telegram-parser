@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-hd">
+  <div class="page-title">Account</div>
+  <div class="page-sub">{{ user.username }}</div>
+</div>
+
+<div class="card" style="max-width: 420px;">
+  <div class="card-head"><span class="card-title">Change Password</span></div>
+  <div class="card-body">
+    <div class="form-group">
+      <label for="new-pw">New Password</label>
+      <input type="password" id="new-pw" placeholder="••••••••">
+    </div>
+    <div class="form-group">
+      <label for="confirm-pw">Confirm Password</label>
+      <input type="password" id="confirm-pw" placeholder="••••••••">
+    </div>
+    <button class="btn btn-primary" onclick="changePw()">Update Password</button>
+  </div>
+</div>
+
+<script>
+async function changePw() {
+  const pw = document.getElementById('new-pw').value;
+  const conf = document.getElementById('confirm-pw').value;
+  if (!pw) { toast('Enter a new password', false); return; }
+  if (pw !== conf) { toast('Passwords do not match', false); return; }
+  const r = await fetch('/api/account/password', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({password: pw}),
+  });
+  if (r.ok) {
+    toast('Password updated');
+    document.getElementById('new-pw').value = '';
+    document.getElementById('confirm-pw').value = '';
+  } else {
+    toast('Failed to update password', false);
+  }
+}
+</script>
+{% endblock %}
