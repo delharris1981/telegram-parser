@@ -1,3 +1,13 @@
+import os
+import tempfile
+
+_tmp = tempfile.mkdtemp()
+os.environ.setdefault("SESSION_SECRET", "test-secret-key")
+os.environ.setdefault("USERS_DB_PATH", os.path.join(_tmp, "test_users.db"))
+os.environ.setdefault("DB_PATH", os.path.join(_tmp, "test_admin.db"))
+os.environ.setdefault("DASHBOARD_USERNAME", "testuser")
+os.environ.setdefault("DASHBOARD_PASSWORD", "testpass")
+
 import pytest_asyncio
 from db.init import init_db
 
