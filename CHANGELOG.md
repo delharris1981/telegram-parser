@@ -4,6 +4,11 @@ All notable changes to TeleListener are documented here.
 
 ## [Unreleased]
 
+## [2.3.1] – 2026-06-30
+
+### Fixed
+- Parser task no longer silently dies when `client.start()` raises an unhandled exception (e.g. missing session file, Telethon RPC errors). The task now catches all unexpected errors, logs them with full traceback, and retries after `RECONNECT_DELAY` seconds so the status correctly shows "running" instead of "stopped".
+
 ## [2.3] – 2026-06-30
 
 ### Added

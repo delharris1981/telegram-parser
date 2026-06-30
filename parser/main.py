@@ -150,6 +150,10 @@ async def run_parser_loop(username: str, db_path: str) -> None:
                     state.clear_client(username)
                     logger.error("[%s] Network error: %s — reconnecting in %ds", username, exc, RECONNECT_DELAY)
                     await asyncio.sleep(RECONNECT_DELAY)
+                except Exception as exc:
+                    state.clear_client(username)
+                    logger.exception("[%s] Unexpected error — reconnecting in %ds: %s", username, RECONNECT_DELAY, exc)
+                    await asyncio.sleep(RECONNECT_DELAY)
                 except KeyboardInterrupt:
                     return
         except asyncio.CancelledError:
