@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends
-import config
 from dashboard.auth import get_db_path
 from db.operations import list_hits, count_hits, count_keywords, count_groups
 from dashboard.sanitize import sanitize
