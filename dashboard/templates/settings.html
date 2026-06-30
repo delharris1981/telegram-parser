@@ -65,6 +65,64 @@
     </div>
   </div>
 
+  <!-- Telegram Authentication -->
+  <div class="card">
+    <div class="card-head">
+      <span class="card-title">Telegram Authentication</span>
+      <span id="auth-badge" class="badge" style="font-size:11px;"></span>
+    </div>
+    <div class="card-body">
+
+      <div id="auth-step-phone">
+        <p class="form-hint" style="margin-bottom:14px;">
+          Authenticate once so the parser can connect to Telegram on your behalf.
+          Enter your phone number to receive a verification code.
+        </p>
+        <div class="form-group">
+          <label for="tg-phone">Phone Number</label>
+          <input type="tel" id="tg-phone" placeholder="+1234567890">
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="btn btn-primary" onclick="sendCode()">Send Code</button>
+          <span id="auth-msg" class="text-sm"></span>
+        </div>
+      </div>
+
+      <div id="auth-step-code" style="display:none;">
+        <p class="form-hint" style="margin-bottom:14px;">Enter the code Telegram sent to your app.</p>
+        <div class="form-group">
+          <label for="tg-code">Verification Code</label>
+          <input type="text" id="tg-code" placeholder="12345" maxlength="10">
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="btn btn-primary" onclick="verifyCode()">Verify</button>
+          <button class="btn" onclick="showStep('phone')">Back</button>
+          <span id="auth-code-msg" class="text-sm"></span>
+        </div>
+      </div>
+
+      <div id="auth-step-2fa" style="display:none;">
+        <p class="form-hint" style="margin-bottom:14px;">Two-factor authentication is enabled. Enter your cloud password.</p>
+        <div class="form-group">
+          <label for="tg-password">2FA Password</label>
+          <input type="password" id="tg-password">
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="btn btn-primary" onclick="verifyPassword()">Submit</button>
+          <span id="auth-2fa-msg" class="text-sm"></span>
+        </div>
+      </div>
+
+      <div id="auth-step-done" style="display:none;">
+        <p class="form-hint" style="margin-bottom:14px;">
+          Authenticated. The parser will connect automatically when started.
+        </p>
+        <button class="btn" onclick="showStep('phone')">Re-authenticate</button>
+      </div>
+
+    </div>
+  </div>
+
   <!-- Auto-Discovery -->
   <div class="card">
     <div class="card-head"><span class="card-title">Auto-Discovery</span></div>
@@ -139,6 +197,89 @@
 </div>
 
 <script>
+// --- Telegram Auth ---
+
+function showStep(step) {
+  ['phone','code','2fa','done'].forEach(s =>
+    document.getElementById('auth-step-' + s).style.display = s === step ? '' : 'none'
+  );
+}
+
+function setAuthMsg(id, text, ok) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.style.color = ok ? 'var(--success)' : 'var(--danger)';
+}
+
+async function loadAuthStatus() {
+  const r = await fetch('/api/auth/telegram/status').then(x => x.json());
+  const badge = document.getElementById('auth-badge');
+  if (r.authenticated) {
+    badge.textContent = 'Authenticated';
+    badge.className = 'badge badge-green';
+    showStep('done');
+  } else {
+    badge.textContent = 'Not authenticated';
+    badge.className = 'badge badge-red';
+    showStep('phone');
+  }
+}
+
+async function sendCode() {
+  const phone = document.getElementById('tg-phone').value.trim();
+  if (!phone) return setAuthMsg('auth-msg', 'Enter a phone number.', false);
+  setAuthMsg('auth-msg', 'Sending…', true);
+  const r = await fetch('/api/auth/telegram/send-code', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({phone}),
+  });
+  if (!r.ok) {
+    const e = await r.json();
+    return setAuthMsg('auth-msg', e.detail || 'Error', false);
+  }
+  showStep('code');
+}
+
+async function verifyCode() {
+  const code = document.getElementById('tg-code').value.trim();
+  if (!code) return setAuthMsg('auth-code-msg', 'Enter the code.', false);
+  setAuthMsg('auth-code-msg', 'Verifying…', true);
+  const r = await fetch('/api/auth/telegram/verify-code', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({code}),
+  });
+  if (!r.ok) {
+    const e = await r.json();
+    return setAuthMsg('auth-code-msg', e.detail || 'Error', false);
+  }
+  const data = await r.json();
+  if (data.status === '2fa_required') {
+    showStep('2fa');
+  } else {
+    loadAuthStatus();
+  }
+}
+
+async function verifyPassword() {
+  const password = document.getElementById('tg-password').value;
+  if (!password) return setAuthMsg('auth-2fa-msg', 'Enter your password.', false);
+  setAuthMsg('auth-2fa-msg', 'Verifying…', true);
+  const r = await fetch('/api/auth/telegram/verify-password', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({password}),
+  });
+  if (!r.ok) {
+    const e = await r.json();
+    return setAuthMsg('auth-2fa-msg', e.detail || 'Error', false);
+  }
+  loadAuthStatus();
+}
+
+// --- Settings ---
+
 function updateToggleLabel() {
   const on = document.getElementById('notif-toggle').checked;
   const lbl = document.getElementById('toggle-lbl');
@@ -235,5 +376,6 @@ async function saveAutoDiscovery() {
 loadApiConfig();
 loadNotifs();
 loadAutoDiscovery();
+loadAuthStatus();
 </script>
 {% endblock %}

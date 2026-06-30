@@ -1,8 +1,8 @@
 import logging
-import pathlib
 from typing import Optional
 from telethon import TelegramClient
 from telethon.errors import FloodWaitError
+from telethon.sessions import StringSession
 
 import config
 from db.operations import (
@@ -21,10 +21,6 @@ async def create_client(db_path: str) -> TelegramClient:
 
     api_id = (db_cfg["api_id"] if db_cfg and db_cfg["api_id"] else None) or config.API_ID
     api_hash = (db_cfg["api_hash"] if db_cfg and db_cfg["api_hash"] else None) or config.API_HASH
-    session_name = (
-        (db_cfg["session_name"] if db_cfg and db_cfg["session_name"] else None)
-        or config.SESSION_NAME
-    )
 
     proxy: Optional[tuple] = None
     if db_cfg and db_cfg["proxy_type"] and db_cfg["proxy_host"] and db_cfg["proxy_port"]:
@@ -38,9 +34,8 @@ async def create_client(db_path: str) -> TelegramClient:
             "Set them in the dashboard (Settings → API Credentials) or via .env."
         )
 
-    session_dir = str(pathlib.Path(db_path).parent)
-    session_path = f"{session_dir}/{session_name}"
-    return TelegramClient(session_path, api_id, api_hash, proxy=proxy)
+    session_str = (db_cfg.get("tg_session") or "") if db_cfg else ""
+    return TelegramClient(StringSession(session_str), api_id, api_hash, proxy=proxy)
 
 
 async def on_new_message(event, client: TelegramClient, db_path: str) -> None:

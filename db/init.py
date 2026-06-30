@@ -42,7 +42,8 @@ CREATE TABLE IF NOT EXISTS settings (
     auto_discovery_enabled INTEGER NOT NULL DEFAULT 0,
     auto_discovery_min_members INTEGER NOT NULL DEFAULT 500,
     auto_discovery_interval_hours INTEGER NOT NULL DEFAULT 6,
-    auto_discovery_last_run DATETIME
+    auto_discovery_last_run DATETIME,
+    tg_session TEXT NOT NULL DEFAULT ''
 );
 
 INSERT OR IGNORE INTO settings (id, tg_notifications_enabled, tg_notification_destination,
@@ -72,6 +73,7 @@ _MIGRATIONS = [
     "ALTER TABLE settings ADD COLUMN auto_discovery_min_members INTEGER NOT NULL DEFAULT 500",
     "ALTER TABLE settings ADD COLUMN auto_discovery_interval_hours INTEGER NOT NULL DEFAULT 6",
     "ALTER TABLE settings ADD COLUMN auto_discovery_last_run DATETIME",
+    "ALTER TABLE settings ADD COLUMN tg_session TEXT NOT NULL DEFAULT ''",
 ]
 
 

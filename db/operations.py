@@ -227,8 +227,19 @@ async def update_settings(db_path: str, enabled: int, destination: str) -> None:
 async def get_api_config(db_path: str) -> Optional[dict]:
     return await _fetchone(
         db_path,
-        "SELECT api_id, api_hash, session_name, proxy_type, proxy_host, proxy_port FROM settings WHERE id=1",
+        "SELECT api_id, api_hash, session_name, proxy_type, proxy_host, proxy_port, tg_session FROM settings WHERE id=1",
     )
+
+
+async def get_tg_session(db_path: str) -> str:
+    row = await _fetchone(db_path, "SELECT tg_session FROM settings WHERE id=1")
+    return (row or {}).get("tg_session") or ""
+
+
+async def save_tg_session(db_path: str, session_str: str) -> None:
+    async with aiosqlite.connect(db_path, timeout=10.0) as db:
+        await db.execute("UPDATE settings SET tg_session=? WHERE id=1", (session_str,))
+        await db.commit()
 
 
 async def update_api_config(

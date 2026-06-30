@@ -4,6 +4,18 @@ All notable changes to TeleListener are documented here.
 
 ## [Unreleased]
 
+## [2.4] – 2026-06-30
+
+### Added
+- **Telegram authentication flow** – new "Telegram Authentication" card in Settings lets each user authenticate via phone number + OTP (with 2FA password support). Session is stored as a `StringSession` string in the per-user SQLite DB; no session files on disk.
+- `GET /api/auth/telegram/status`, `POST /api/auth/telegram/send-code`, `POST /api/auth/telegram/verify-code`, `POST /api/auth/telegram/verify-password` endpoints (`dashboard/routes/tg_auth.py`).
+- `tg_session` column added to `settings` table (migration applied automatically on startup).
+- `get_tg_session` / `save_tg_session` DB helpers in `db/operations.py`.
+
+### Changed
+- `parser/client.py` switched from file-based sessions to `StringSession` loaded from DB. Removes `session_name`/`pathlib` dependency from client construction.
+- `parser/main.py` replaces `client.start()` with `client.connect()` + `is_user_authorized()` check. When not authenticated the inner loop breaks and the outer loop restarts (re-reads session from DB), so a completed auth flow is picked up within `CREDENTIALS_RETRY` seconds without restarting the server.
+
 ## [2.3.1] – 2026-06-30
 
 ### Fixed

@@ -127,11 +127,19 @@ async def run_parser_loop(username: str, db_path: str) -> None:
             except Exception as exc:
                 logger.exception("Unhandled error in message handler: %s", exc)
 
+        cancelled = False
         try:
             while True:
                 try:
                     logger.info("[%s] Connecting to Telegram...", username)
-                    await client.start()
+                    await client.connect()
+                    if not await client.is_user_authorized():
+                        logger.warning(
+                            "[%s] Not authenticated — complete Telegram auth in Settings. Retrying in %ds.",
+                            username, CREDENTIALS_RETRY,
+                        )
+                        await asyncio.sleep(CREDENTIALS_RETRY)
+                        break  # restart outer loop to pick up newly-saved session from DB
                     state.set_client(username, client)
                     logger.info("[%s] Parser running.", username)
                     retention_task = asyncio.create_task(run_retention_purge(db_path))
@@ -157,8 +165,10 @@ async def run_parser_loop(username: str, db_path: str) -> None:
                 except KeyboardInterrupt:
                     return
         except asyncio.CancelledError:
-            pass
+            cancelled = True
         finally:
             state.clear_client(username)
             await client.disconnect()
-        return
+
+        if cancelled:
+            return
