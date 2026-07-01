@@ -15,8 +15,10 @@ from dashboard.routes import settings as settings_router
 from dashboard.routes import parser as parser_router
 from dashboard.routes import admin as admin_router
 from dashboard.routes import tg_auth as tg_auth_router
-from db.users import init_users_db, get_user_by_username, create_user
+from db.users import init_users_db, get_user_by_username, create_user, list_users
 from db.init import init_db
+from db.operations import get_tg_session
+from parser import manager
 
 if getattr(sys, "frozen", False):
     BASE_DIR = pathlib.Path(sys._MEIPASS) / "dashboard"
@@ -39,6 +41,11 @@ async def lifespan(app: FastAPI):
             _pwd.hash(config.DASHBOARD_PASSWORD),
             config.DB_PATH,
         )
+
+    for u in await list_users(config.USERS_DB_PATH):
+        if await get_tg_session(u["db_path"]):
+            await manager.start_parser(u["username"], u["db_path"])
+
     yield
 
 

@@ -4,6 +4,11 @@ All notable changes to TeleListener are documented here.
 
 ## [Unreleased]
 
+## [2.5] – 2026-07-01
+
+### Fixed
+- Parser no longer requires a manual "Start" click after every process/container restart. Any user with a saved Telegram session is now auto-started in the FastAPI `lifespan` startup hook (`dashboard/main.py`), so a Docker/Unraid container restart resumes monitoring on its own instead of sitting idle until someone opens the dashboard.
+
 ## [2.4] – 2026-06-30
 
 ### Added
