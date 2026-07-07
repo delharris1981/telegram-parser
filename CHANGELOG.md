@@ -4,6 +4,16 @@ All notable changes to TeleListener are documented here.
 
 ## [Unreleased]
 
+## [2.7] – 2026-07-07
+
+### Added
+- **Sync membership check** – "Sync from Telegram" now verifies which groups in the database are actually joined in the current account. Groups not in account are flagged with a red "not joined" badge and offer **Join** (for public handles) or **Remove** buttons. Private groups without handles show only **Remove** — use Join by Link card to rejoin via invite link.
+
+### Changed
+- Groups table now shows membership status badge (joined / not joined) for each group.
+- `/api/groups/sync` returns `not_joined` list of group IDs not in the account's dialogs.
+- `DELETE /api/groups/joined/{group_id}` accepts optional `?db_only=true` flag to remove from list without leaving on Telegram.
+
 ## [2.6] – 2026-07-07
 
 ### Added

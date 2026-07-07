@@ -49,6 +49,7 @@ async def get_joined(db_path: str = Depends(get_db_path)):
 @router.delete("/api/groups/joined/{group_id}")
 async def leave_group(
     group_id: int,
+    db_only: bool = False,
     db_path: str = Depends(get_db_path),
     client=Depends(get_tg_client),
 ):
@@ -56,7 +57,7 @@ async def leave_group(
     group = next((g for g in groups if g["id"] == group_id), None)
     if not group:
         raise HTTPException(404, "Group not found")
-    if client:
+    if client and not db_only:
         try:
             from telethon.tl.functions.channels import LeaveChannelRequest
             entity = await client.get_entity(int(group["telegram_id"]))
@@ -76,12 +77,14 @@ async def sync_groups(db_path: str = Depends(get_db_path), client=Depends(get_tg
     except Exception as exc:
         raise HTTPException(500, str(exc))
     existing_ids = await list_joined_group_telegram_ids(db_path)
+    dialog_ids = set()
     added = 0
     for dialog in dialogs:
         entity = dialog.entity
         if not isinstance(entity, (Channel, Chat)):
             continue
         telegram_id = entity.id
+        dialog_ids.add(telegram_id)
         if telegram_id in existing_ids:
             continue
         title = getattr(entity, "title", "") or ""
@@ -90,7 +93,11 @@ async def sync_groups(db_path: str = Depends(get_db_path), client=Depends(get_tg
         await add_joined_group(db_path, telegram_id, title, handle, member_count)
         existing_ids.add(telegram_id)
         added += 1
-    return {"synced": added}
+    not_joined = [
+        g["id"] for g in await list_joined_groups(db_path)
+        if int(g["telegram_id"]) not in dialog_ids
+    ]
+    return {"synced": added, "not_joined": not_joined}
 
 
 @router.get("/api/groups/search")

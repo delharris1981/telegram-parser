@@ -151,7 +151,10 @@ async function syncGroups(btn) {
     if (r.status === 503) { toast('Parser not connected to Telegram', false); return; }
     if (!r.ok) { const e = await r.json().catch(()=>({})); toast(e.detail || 'Sync failed', false); return; }
     const data = await r.json();
-    toast(data.synced > 0 ? `Imported ${data.synced} group${data.synced===1?'':'s'} from Telegram` : 'Already up to date');
+    notJoined = new Set(data.not_joined || []);
+    let msg = data.synced > 0 ? `Imported ${data.synced} group${data.synced===1?'':'s'} from Telegram` : 'Already up to date';
+    if (notJoined.size) msg += ` — ${notJoined.size} not joined in this account`;
+    toast(msg);
     loadJoined();
   } catch(e) {
     toast('Sync error: ' + e.message, false);
@@ -161,6 +164,8 @@ async function syncGroups(btn) {
 }
 
 // ── Joined groups ─────────────────────────────────────────────────
+let notJoined = new Set();  // group ids flagged by last sync as not in this account
+
 async function loadJoined() {
   const r = await fetch('/api/groups/joined');
   const gs = await r.json();
@@ -182,24 +187,60 @@ async function loadJoined() {
     const hits = g.hit_count > 0
       ? `<span class="badge badge-green">${g.hit_count} hit${g.hit_count === 1 ? '' : 's'}</span>`
       : '<span class="text-muted text-xs">no hits yet</span>';
+    const missing = notJoined.has(g.id);
+    const status = missing
+      ? '<span class="badge badge-red">not joined</span>'
+      : '<span class="badge badge-green">joined</span>';
+    const actions = missing
+      ? `${g.handle ? `<button class="btn btn-primary btn-sm" onclick="rejoinGroup('${g.handle}','${esc(g.title||'')}',this)">Join</button> ` : ''}
+         <button class="btn btn-danger btn-sm" onclick="removeGroup(${g.id},'${esc(g.title||'')}',this)">Remove</button>`
+      : `<button class="btn btn-danger btn-sm" onclick="leaveGroup(${g.id},'${esc(g.title||'')}',this)">Leave</button>`;
     return `<tr>
       <td class="fw-600">${esc(g.title || 'Unknown')}</td>
       <td>${handle}</td>
       <td class="text-muted text-sm">${g.member_count ? g.member_count.toLocaleString() : '—'}</td>
+      <td>${status}</td>
       <td>${hits}</td>
       <td class="text-muted text-xs" style="white-space:nowrap;">${fmt(g.joined_at)}</td>
-      <td>
-        <button class="btn btn-danger btn-sm" onclick="leaveGroup(${g.id},'${esc(g.title||'')}',this)">Leave</button>
-      </td>
+      <td style="white-space:nowrap;">${actions}</td>
     </tr>`;
   }).join('');
 
   wrap.innerHTML = `<table>
     <thead><tr>
-      <th>Name</th><th>Handle</th><th>Members</th><th>Hits</th><th>Joined</th><th></th>
+      <th>Name</th><th>Handle</th><th>Members</th><th>Status</th><th>Hits</th><th>Joined</th><th></th>
     </tr></thead>
     <tbody>${rows}</tbody>
   </table>`;
+}
+
+async function rejoinGroup(handle, title, btn) {
+  btn.textContent = 'Joining…'; btn.disabled = true;
+  const r = await fetch('/api/groups/join', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({handle, title, telegram_id: 0, member_count: 0}),
+  });
+  if (r.ok) {
+    toast('Joined ' + title);
+    syncGroups(document.querySelector('[onclick^="syncGroups"]'));
+  } else {
+    const err = await r.json().catch(() => ({}));
+    toast(err.detail || 'Failed to join', false);
+    btn.textContent = 'Join'; btn.disabled = false;
+  }
+}
+
+async function removeGroup(id, title, btn) {
+  if (!confirm('Remove "' + title + '" from the list? (You are not a member, so nothing is left on Telegram.)')) return;
+  btn.textContent = 'Removing…'; btn.disabled = true;
+  const r = await fetch('/api/groups/joined/' + id + '?db_only=true', {method: 'DELETE'});
+  if (r.ok) { toast('Removed ' + title); notJoined.delete(id); loadJoined(); }
+  else {
+    const err = await r.json().catch(() => ({}));
+    toast(err.detail || 'Failed to remove', false);
+    btn.textContent = 'Remove'; btn.disabled = false;
+  }
 }
 
 async function leaveGroup(id, title, btn) {
