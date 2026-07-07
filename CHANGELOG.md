@@ -4,6 +4,11 @@ All notable changes to TeleListener are documented here.
 
 ## [Unreleased]
 
+## [2.6] – 2026-07-07
+
+### Added
+- **Join by Link** card on the Groups page — paste a public `t.me/username` or private invite link (`t.me/+hash`, `t.me/joinchat/hash`) to join a group/channel directly, useful for rejoining chats that were only present in an old Telegram account. New `POST /api/groups/join-link` endpoint (`dashboard/routes/groups.py`) parses the link and uses `ImportChatInviteRequest` for private invites or `JoinChannelRequest` for public handles.
+
 ## [2.5] – 2026-07-01
 
 ### Fixed

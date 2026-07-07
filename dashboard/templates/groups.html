@@ -19,6 +19,19 @@
   </div>
 </div>
 
+<!-- ── Join by link ───────────────────────────────────────────── -->
+<div class="card" style="margin-bottom:20px;">
+  <div class="card-head"><span class="card-title">Join by Link</span></div>
+  <div class="card-body">
+    <div style="display:flex;gap:10px;">
+      <input type="text" id="link-input" placeholder="https://t.me/username or https://t.me/+inviteHash"
+             style="flex:1;" onkeydown="if(event.key==='Enter')joinByLink()">
+      <button class="btn btn-primary" onclick="joinByLink()" id="link-btn">Join</button>
+    </div>
+    <p class="text-muted text-xs" style="margin-top:8px;">Use this to rejoin channels/groups from an old Telegram account that aren't in this one — paste a public link or a private invite link.</p>
+  </div>
+</div>
+
 <!-- ── Joined groups ──────────────────────────────────────────── -->
 <div class="card" style="margin-bottom:20px;">
   <div class="card-head">
@@ -98,6 +111,34 @@ async function joinGroup(handle, title, telegram_id, member_count, btn) {
   } else {
     const err = await r.json().catch(() => ({}));
     toast((err.detail || 'Failed to join'), false);
+    btn.textContent = 'Join'; btn.disabled = false;
+  }
+}
+
+// ── Join by link ──────────────────────────────────────────────────
+async function joinByLink() {
+  const input = document.getElementById('link-input');
+  const link = input.value.trim();
+  if (!link) return;
+  const btn = document.getElementById('link-btn');
+  btn.textContent = 'Joining…'; btn.disabled = true;
+  try {
+    const r = await fetch('/api/groups/join-link', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({link}),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (r.ok) {
+      toast('Joined ' + (data.title || link));
+      input.value = '';
+      loadJoined();
+    } else {
+      toast(data.detail || 'Failed to join', false);
+    }
+  } catch(e) {
+    toast('Error: ' + e.message, false);
+  } finally {
     btn.textContent = 'Join'; btn.disabled = false;
   }
 }

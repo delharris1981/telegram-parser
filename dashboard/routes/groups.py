@@ -1,3 +1,5 @@
+import re
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from telethon.tl.types import Channel, Chat
@@ -16,6 +18,22 @@ class JoinIn(BaseModel):
     title: str = ""
     telegram_id: int = 0
     member_count: int = 0
+
+
+class JoinLinkIn(BaseModel):
+    link: str
+
+
+def parse_invite_link(link: str) -> tuple[str, str]:
+    """Return (kind, value) — kind is 'hash' for private invites, 'username' otherwise."""
+    value = link.strip().lstrip("@")
+    value = re.sub(r"^https?://", "", value)
+    value = re.sub(r"^(t\.me|telegram\.me)/", "", value)
+    if value.startswith("joinchat/"):
+        return "hash", value[len("joinchat/"):]
+    if value.startswith("+"):
+        return "hash", value[1:]
+    return "username", value.split("/")[0].split("?")[0]
 
 
 @router.get("/api/groups")
@@ -116,5 +134,37 @@ async def join_group(body: JoinIn, db_path: str = Depends(get_db_path), client=D
             member_count = body.member_count or 0
     except Exception as exc:
         raise HTTPException(500, f"Could not join group: {exc}")
+    await add_joined_group(db_path, telegram_id, title, handle, member_count)
+    return {"status": "ok", "title": title, "telegram_id": telegram_id}
+
+
+@router.post("/api/groups/join-link")
+async def join_by_link(body: JoinLinkIn, db_path: str = Depends(get_db_path), client=Depends(get_tg_client)):
+    if client is None:
+        raise HTTPException(503, "Parser not connected to Telegram — configure credentials first")
+    kind, value = parse_invite_link(body.link)
+    if not value:
+        raise HTTPException(400, "Invalid Telegram link")
+    try:
+        if kind == "hash":
+            from telethon.tl.functions.messages import CheckChatInviteRequest, ImportChatInviteRequest
+            from telethon.tl.types import ChatInviteAlready, ChatInvitePeek
+
+            invite = await client(CheckChatInviteRequest(value))
+            if isinstance(invite, (ChatInviteAlready, ChatInvitePeek)):
+                entity = invite.chat
+            else:
+                updates = await client(ImportChatInviteRequest(value))
+                entity = updates.chats[0]
+        else:
+            from telethon.tl.functions.channels import JoinChannelRequest
+            entity = await client.get_entity(value)
+            await client(JoinChannelRequest(entity))
+    except Exception as exc:
+        raise HTTPException(500, f"Could not join: {exc}")
+    telegram_id = entity.id
+    title = getattr(entity, "title", value)
+    handle = getattr(entity, "username", None) or ""
+    member_count = getattr(entity, "participants_count", 0) or 0
     await add_joined_group(db_path, telegram_id, title, handle, member_count)
     return {"status": "ok", "title": title, "telegram_id": telegram_id}
