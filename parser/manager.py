@@ -31,3 +31,11 @@ async def stop_parser(username: str) -> None:
 def parser_status(username: str) -> str:
     task = _tasks.get(username)
     return "running" if (task and not task.done()) else "stopped"
+
+
+async def rename_parser(old_username: str, new_username: str, db_path: str) -> None:
+    # Task/client tracking is keyed by username, so a username change orphans
+    # the running task under the old key unless it's restarted under the new one.
+    if parser_status(old_username) == "running":
+        await stop_parser(old_username)
+        await start_parser(new_username, db_path)

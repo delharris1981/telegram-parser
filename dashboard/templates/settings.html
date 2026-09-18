@@ -194,9 +194,57 @@
     </div>
   </div>
 
+  <!-- Backup & Restore -->
+  <div class="card">
+    <div class="card-head"><span class="card-title">Backup &amp; Restore</span></div>
+    <div class="card-body">
+      <p class="form-hint" style="margin-bottom:18px;">
+        Export your entire database (keywords, groups, hits, settings, Telegram session) as a single file,
+        or restore one from a previous export.
+      </p>
+
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">
+        <button class="btn btn-primary" onclick="exportBackup()">Export Database</button>
+      </div>
+
+      <div class="form-group">
+        <label for="restore-file">Restore from Backup</label>
+        <input type="file" id="restore-file" accept=".db">
+        <div class="form-hint">This replaces all current data and cannot be undone.</div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="btn" onclick="importBackup()">Import Database</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
+// --- Backup & Restore ---
+
+function exportBackup() {
+  window.location.href = '/api/backup/export';
+}
+
+async function importBackup() {
+  const input = document.getElementById('restore-file');
+  const file = input.files[0];
+  if (!file) return toast('Choose a backup file first.', false);
+  if (!confirm('This will replace ALL current data (keywords, groups, hits, settings, Telegram session) with the contents of the backup file. This cannot be undone. Continue?')) return;
+
+  const formData = new FormData();
+  formData.append('file', file);
+  const r = await fetch('/api/backup/import', { method: 'POST', body: formData });
+  if (!r.ok) {
+    const e = await r.json().catch(() => ({}));
+    return toast(e.detail || 'Import failed', false);
+  }
+  toast('Database restored — reloading…', true);
+  setTimeout(() => location.reload(), 1200);
+}
+
 // --- Telegram Auth ---
 
 function showStep(step) {

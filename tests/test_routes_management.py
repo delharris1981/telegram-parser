@@ -1,14 +1,28 @@
 import os
+import asyncio
+import tempfile
+import pathlib
 from unittest.mock import AsyncMock, patch
+from passlib.context import CryptContext
 from fastapi.testclient import TestClient
 from dashboard.main import app
+import config
+from db.users import create_user
+from db.init import init_db
 
 _USERNAME = os.environ.get("DASHBOARD_USERNAME", "testuser")
 _PASSWORD = os.environ.get("DASHBOARD_PASSWORD", "testpass")
+_pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
-def _login(c):
-    c.post("/login", data={"username": _USERNAME, "password": _PASSWORD})
+def _login(c, username=_USERNAME, password=_PASSWORD):
+    c.post("/login", data={"username": username, "password": password})
+
+
+def _make_user(username, password="pw"):
+    db_path = str(pathlib.Path(tempfile.mkdtemp()) / "telelistener.db")
+    asyncio.run(init_db(db_path))
+    return asyncio.run(create_user(config.USERS_DB_PATH, username, _pwd.hash(password), db_path))
 
 
 def test_list_keywords():
@@ -69,3 +83,37 @@ def test_list_groups():
             r = c.get("/api/groups")
     assert r.status_code == 200
     assert r.json()[0]["title"] == "Чат"
+
+
+def test_admin_rename_user():
+    uid = _make_user("rename_target")
+    with TestClient(app) as c:
+        _login(c)
+        r = c.post(f"/api/admin/users/{uid}/username", json={"username": "rename_target2"})
+    assert r.status_code == 200
+    assert r.json() == {"status": "ok"}
+
+
+def test_admin_rename_unknown_user_404():
+    with TestClient(app) as c:
+        _login(c)
+        r = c.post("/api/admin/users/99999/username", json={"username": "whoever"})
+    assert r.status_code == 404
+
+
+def test_admin_rename_user_duplicate_400():
+    _make_user("existing_name")
+    uid = _make_user("to_be_renamed")
+    with TestClient(app) as c:
+        _login(c)
+        r = c.post(f"/api/admin/users/{uid}/username", json={"username": "existing_name"})
+    assert r.status_code == 400
+
+
+def test_account_rename_self_non_admin():
+    _make_user("plain_user")
+    with TestClient(app) as c:
+        _login(c, "plain_user", "pw")
+        r = c.post("/api/account/username", json={"username": "plain_user_renamed"})
+    assert r.status_code == 200
+    assert r.json() == {"status": "ok"}

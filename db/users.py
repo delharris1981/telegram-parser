@@ -77,3 +77,11 @@ async def update_password(users_db_path: str, user_id: int, password_hash: str) 
             "UPDATE users SET password_hash=? WHERE id=?", (password_hash, user_id)
         )
         await db.commit()
+
+
+async def update_username(users_db_path: str, user_id: int, username: str) -> None:
+    async with aiosqlite.connect(users_db_path, timeout=10.0) as db:
+        await db.execute(
+            "UPDATE users SET username=? WHERE id=?", (username, user_id)
+        )
+        await db.commit()

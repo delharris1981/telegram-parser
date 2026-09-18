@@ -6,6 +6,17 @@
 </div>
 
 <div class="card" style="max-width: 420px;">
+  <div class="card-head"><span class="card-title">Change Username</span></div>
+  <div class="card-body">
+    <div class="form-group">
+      <label for="new-username">Username</label>
+      <input type="text" id="new-username" value="{{ user.username }}">
+    </div>
+    <button class="btn btn-primary" onclick="changeUsername()">Update Username</button>
+  </div>
+</div>
+
+<div class="card" style="max-width: 420px;">
   <div class="card-head"><span class="card-title">Change Password</span></div>
   <div class="card-body">
     <div class="form-group">
@@ -21,6 +32,23 @@
 </div>
 
 <script>
+async function changeUsername() {
+  const username = document.getElementById('new-username').value.trim();
+  if (!username) { toast('Enter a username', false); return; }
+  const r = await fetch('/api/account/username', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({username}),
+  });
+  if (r.ok) {
+    toast('Username updated');
+    location.reload();
+  } else {
+    const err = await r.json().catch(() => ({}));
+    toast(err.detail || 'Failed to update username', false);
+  }
+}
+
 async function changePw() {
   const pw = document.getElementById('new-pw').value;
   const conf = document.getElementById('confirm-pw').value;

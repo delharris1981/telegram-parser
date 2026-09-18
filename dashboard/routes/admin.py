@@ -1,10 +1,11 @@
 import pathlib
-from fastapi import APIRouter, Depends, HTTPException
+import aiosqlite
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from passlib.context import CryptContext
 import config
 from dashboard.auth import require_auth, require_admin
-from db.users import create_user, list_users, delete_user, update_password, get_user_by_id
+from db.users import create_user, list_users, delete_user, update_password, update_username, get_user_by_id
 from db.init import init_db
 from parser import manager
 
@@ -19,6 +20,10 @@ class CreateUserIn(BaseModel):
 
 class PasswordIn(BaseModel):
     password: str
+
+
+class UsernameIn(BaseModel):
+    username: str
 
 
 @router.get("/api/admin/users")
@@ -59,7 +64,31 @@ async def api_reset_password(user_id: int, body: PasswordIn, _: dict = Depends(r
     return {"status": "ok"}
 
 
+@router.post("/api/admin/users/{user_id}/username")
+async def api_rename_user(user_id: int, body: UsernameIn, _: dict = Depends(require_admin)):
+    user = await get_user_by_id(config.USERS_DB_PATH, user_id)
+    if not user:
+        raise HTTPException(404, "User not found")
+    try:
+        await update_username(config.USERS_DB_PATH, user_id, body.username)
+    except aiosqlite.IntegrityError:
+        raise HTTPException(400, "Username already taken")
+    await manager.rename_parser(user["username"], body.username, user["db_path"])
+    return {"status": "ok"}
+
+
 @router.post("/api/account/password")
 async def api_change_own_password(body: PasswordIn, user: dict = Depends(require_auth)):
     await update_password(config.USERS_DB_PATH, user["user_id"], _pwd.hash(body.password))
+    return {"status": "ok"}
+
+
+@router.post("/api/account/username")
+async def api_change_own_username(request: Request, body: UsernameIn, user: dict = Depends(require_auth)):
+    try:
+        await update_username(config.USERS_DB_PATH, user["user_id"], body.username)
+    except aiosqlite.IntegrityError:
+        raise HTTPException(400, "Username already taken")
+    await manager.rename_parser(user["username"], body.username, user["db_path"])
+    request.session["user"]["username"] = body.username
     return {"status": "ok"}

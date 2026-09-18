@@ -44,7 +44,8 @@ async function loadUsers() {
       <td><span class="badge ${u.parser_status === 'running' ? 'badge-green' : 'badge-slate'}">${u.parser_status}</span></td>
       <td class="text-muted text-xs">${fmt(u.created_at)}</td>
       <td style="white-space:nowrap;">
-        <button class="btn btn-outline btn-xs" onclick="resetPw(${u.id})">Reset PW</button>
+        <button class="btn btn-outline btn-xs" onclick="renameUser(${u.id})">Rename</button>
+        <button class="btn btn-outline btn-xs" style="margin-left:6px;" onclick="resetPw(${u.id})">Reset PW</button>
         ${u.id !== 1 ? `<button class="btn btn-danger btn-xs" style="margin-left:6px;" onclick="delUser(${u.id})">Delete</button>` : ''}
       </td>
     </tr>`).join('');
@@ -79,6 +80,23 @@ async function delUser(id) {
   if (!confirm('Delete this user? Their data files remain on disk.')) return;
   const r = await fetch('/api/admin/users/' + id, {method: 'DELETE'});
   r.ok ? (toast('User deleted'), loadUsers()) : toast('Failed', false);
+}
+
+async function renameUser(id) {
+  const username = prompt('New username for user ' + id + ':');
+  if (!username) return;
+  const r = await fetch('/api/admin/users/' + id + '/username', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({username}),
+  });
+  if (r.ok) {
+    toast('Username updated');
+    loadUsers();
+  } else {
+    const err = await r.json().catch(() => ({}));
+    toast(err.detail || 'Failed', false);
+  }
 }
 
 async function resetPw(id) {

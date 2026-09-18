@@ -15,6 +15,7 @@ from dashboard.routes import settings as settings_router
 from dashboard.routes import parser as parser_router
 from dashboard.routes import admin as admin_router
 from dashboard.routes import tg_auth as tg_auth_router
+from dashboard.routes import backup as backup_router
 from db.users import init_users_db, get_user_by_username, create_user, list_users
 from db.init import init_db
 from db.operations import get_tg_session
@@ -59,6 +60,7 @@ app.include_router(settings_router.router)
 app.include_router(parser_router.router)
 app.include_router(admin_router.router)
 app.include_router(tg_auth_router.router)
+app.include_router(backup_router.router)
 
 
 @app.get("/login", response_class=HTMLResponse)

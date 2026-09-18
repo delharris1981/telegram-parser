@@ -4,6 +4,18 @@ All notable changes to TeleListener are documented here.
 
 ## [Unreleased]
 
+## [2.8.0] – 2026-09-18
+
+Starts using semantic `X.Y.Z` version numbers (was `X.Y`).
+
+### Added
+- **Editable dashboard login** – the default admin username (previously fixed at first boot from `DASHBOARD_USERNAME`) can now be renamed from the app. New `POST /api/admin/users/{user_id}/username` (admin, any user) and `POST /api/account/username` (self-service) endpoints in `dashboard/routes/admin.py`, backed by `update_username()` in `db/users.py`. "Change Username" card on the Account page; "Rename" button per row on the Admin Users page. `.env` is now only ever needed for the very first boot — both username and password are fully manageable from the dashboard afterwards.
+- **Database backup & restore** – new "Backup & Restore" card in Settings. `GET /api/backup/export` checkpoints the WAL and downloads the user's SQLite database as a file; `POST /api/backup/import` (`dashboard/routes/backup.py`) validates the upload is a real SQLite file, atomically swaps it in, runs pending schema migrations, and restarts the parser if the restored file has a saved Telegram session.
+- Confirmed and documented: TeleListener already supports multiple isolated dashboard accounts (per-user database and Telegram session, admin-only user management at `/admin/users`) — no code changes needed for this, see README.
+
+### Fixed
+- Renaming a user with a running parser no longer orphans it under the old username: `parser.manager.rename_parser()` re-keys the in-memory parser task and Telegram client to the new username so status/lookups stay correct.
+
 ## [2.7] – 2026-07-07
 
 ### Added

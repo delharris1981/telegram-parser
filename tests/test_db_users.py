@@ -1,8 +1,9 @@
 import pytest
 import pytest_asyncio
+import aiosqlite
 from db.users import (
     init_users_db, create_user, get_user_by_username,
-    get_user_by_id, list_users, delete_user, update_password,
+    get_user_by_id, list_users, delete_user, update_password, update_username,
 )
 
 
@@ -60,3 +61,19 @@ async def test_update_password(users_db):
     await update_password(users_db, uid, "new_hash")
     user = await get_user_by_id(users_db, uid)
     assert user["password_hash"] == "new_hash"
+
+
+@pytest.mark.asyncio
+async def test_update_username(users_db):
+    uid = await create_user(users_db, "erin", "h", "d")
+    await update_username(users_db, uid, "erin2")
+    user = await get_user_by_id(users_db, uid)
+    assert user["username"] == "erin2"
+
+
+@pytest.mark.asyncio
+async def test_update_username_duplicate_raises(users_db):
+    await create_user(users_db, "frank", "h", "d1")
+    uid2 = await create_user(users_db, "grace", "h", "d2")
+    with pytest.raises(aiosqlite.IntegrityError):
+        await update_username(users_db, uid2, "frank")

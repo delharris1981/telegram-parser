@@ -15,6 +15,9 @@ A Telegram keyword monitoring UserBot with a FastAPI web dashboard. Monitors pub
 - **Auto-join with flood protection** — exponential backoff + randomised 60–300 s delays between joins
 - **Web dashboard** — live hits feed, keyword management, group viewer, settings — all in a browser
 - **Inline credential setup** — enter API credentials directly in the Settings page; no `.env` editing
+- **Multi-user accounts** — each user gets an isolated database and Telegram session; an admin manages accounts from `/admin/users`
+- **Editable dashboard login** — the default admin username and password can be renamed and changed entirely from the app (Account / Admin pages); `.env` is only used for the very first boot
+- **Database backup & restore** — export your entire database to a file from Settings, and import it back (or onto a new install) at any time
 - **Telegram notifications** — optional real-time alerts to any handle, group ID, or `me` (Saved Messages)
 - **Proxy support** — SOCKS5 / HTTP proxy configurable from the dashboard
 - **7-day hit retention** — parsed hits older than 7 days are automatically purged hourly, keeping the database size in check
@@ -240,6 +243,10 @@ sudo certbot --nginx -d yourdomain.com
 
 This applies to all installation methods.
 
+### 0. Log in and change the default password
+
+The dashboard boots with a default login of **`admin` / `changeme`** unless you set the `DASHBOARD_USERNAME` / `DASHBOARD_PASSWORD` environment variables before the first run. Log in, then go to **[http://localhost:8000/account](http://localhost:8000/account)** and change the username and password right away — no `.env` file or restart needed. The admin account (the first one created) can also rename or reset the password for any other user from **[http://localhost:8000/admin/users](http://localhost:8000/admin/users)**.
+
 ### 1. Get Telegram API credentials
 
 Visit [my.telegram.org/apps](https://my.telegram.org/apps), log in with your Telegram account, and create an app. Note the **API ID** (a number) and **API Hash** (a 32-character hex string).
@@ -303,7 +310,9 @@ The "Last ran" timestamp updates after each discovery run.
 | Live Feed | `/` | Auto-refreshing keyword hits with stats cards (total hits, active keywords, groups monitored) |
 | Keywords | `/keywords` | Add / edit / delete monitored keywords. Bulk add with comma or newline separation. |
 | Groups | `/groups` | Search and join public groups manually; view auto-joined groups with hit counts; leave groups |
-| Settings | `/settings` | API credentials, notifications, auto-discovery configuration |
+| Settings | `/settings` | API credentials, notifications, auto-discovery configuration, database backup & restore |
+| Account | `/account` | Change your own username and password |
+| Admin | `/admin/users` | Admin-only: create, rename, delete users and reset passwords (visible only to the first account) |
 
 ---
 
@@ -374,7 +383,7 @@ pip install -r requirements.txt
 pytest tests/ -v
 ```
 
-58 tests covering the database layer, message handlers, keyword detection, notification formatting, and auto-join backoff logic.
+81 tests covering the database layer, message handlers, keyword detection, notification formatting, auto-join backoff logic, multi-user account management, and backup/restore.
 
 ---
 
@@ -383,4 +392,5 @@ pytest tests/ -v
 - All user-supplied content (messages, usernames, group titles) is HTML-escaped before rendering in the dashboard
 - The `.session` file grants full access to your Telegram account — keep it private and never commit it
 - Deploy behind a reverse proxy (nginx / Caddy) with HTTPS when exposing the dashboard on a public server
-- The `db/` folder contains your session and database — back it up regularly on a server deployment
+- The `db/` folder contains your session and database — back it up regularly on a server deployment, or use **Settings → Backup & Restore** to export a copy on demand
+- Change the default `admin` / `changeme` login immediately after first boot (see [First-time setup](#first-time-setup))
