@@ -394,3 +394,9 @@ pytest tests/ -v
 - Deploy behind a reverse proxy (nginx / Caddy) with HTTPS when exposing the dashboard on a public server
 - The `db/` folder contains your session and database — back it up regularly on a server deployment, or use **Settings → Backup & Restore** to export a copy on demand
 - Change the default `admin` / `changeme` login immediately after first boot (see [First-time setup](#first-time-setup))
+
+---
+
+## License
+
+Licensed under the [GNU AGPL-3.0](LICENSE). If you modify this project and run it as a network service, you must make your source changes available to users of that service.
