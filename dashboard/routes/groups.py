@@ -33,6 +33,8 @@ def parse_invite_link(link: str) -> tuple[str, str]:
         return "hash", value[len("joinchat/"):]
     if value.startswith("+"):
         return "hash", value[1:]
+    if value.startswith("c/"):
+        return "internal", value
     return "username", value.split("/")[0].split("?")[0]
 
 
@@ -60,7 +62,11 @@ async def leave_group(
     if client and not db_only:
         try:
             from telethon.tl.functions.channels import LeaveChannelRequest
-            entity = await client.get_entity(int(group["telegram_id"]))
+            from telethon.tl.types import PeerChannel
+            if group["handle"]:
+                entity = await client.get_entity(group["handle"])
+            else:
+                entity = await client.get_entity(PeerChannel(int(group["telegram_id"])))
             await client(LeaveChannelRequest(entity))
         except Exception as exc:
             raise HTTPException(500, f"Could not leave group: {exc}")
@@ -152,6 +158,12 @@ async def join_by_link(body: JoinLinkIn, db_path: str = Depends(get_db_path), cl
     kind, value = parse_invite_link(body.link)
     if not value:
         raise HTTPException(400, "Invalid Telegram link")
+    if kind == "internal":
+        raise HTTPException(
+            400,
+            "This is a t.me/c/... link, which only works if you're already a member. "
+            "Use an invite link (t.me/+... or t.me/joinchat/...) or the channel's @username instead.",
+        )
     try:
         if kind == "hash":
             from telethon.tl.functions.messages import CheckChatInviteRequest, ImportChatInviteRequest

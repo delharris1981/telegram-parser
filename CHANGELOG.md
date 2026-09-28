@@ -4,6 +4,13 @@ All notable changes to TeleListener are documented here.
 
 ## [Unreleased]
 
+## [2.8.1] – 2026-09-28
+
+Fixes group join/leave errors.
+
+- `t.me/c/<id>/...` links now return a clear error instead of being misparsed as username "c" (these links have no invite hash and only work if already a member).
+- Leaving a joined group now resolves the entity by its stored `@handle` when available, falling back to `PeerChannel(id)`; fixes "Could not find the input entity for PeerUser(...)" for channels whose bare ID wasn't cached.
+
 ## [2.8.0] – 2026-09-18
 
 Starts using semantic `X.Y.Z` version numbers (was `X.Y`).
