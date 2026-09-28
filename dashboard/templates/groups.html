@@ -186,7 +186,7 @@ async function loadJoined() {
       : '<span class="text-muted">—</span>';
     const hits = g.hit_count > 0
       ? `<span class="badge badge-green">${g.hit_count} hit${g.hit_count === 1 ? '' : 's'}</span>`
-      : '<span class="text-muted text-xs">no hits yet</span>';
+      : '<span class="text-muted text-xs" style="white-space:nowrap;">no hits yet</span>';
     const missing = notJoined.has(g.id);
     const status = missing
       ? '<span class="badge badge-red">not joined</span>'

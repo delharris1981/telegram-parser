@@ -4,6 +4,12 @@ All notable changes to TeleListener are documented here.
 
 ## [Unreleased]
 
+## [2.8.2] – 2026-09-28
+
+Fixes Groups page display.
+
+- Joined Groups table no longer requires horizontal scrolling — widened the page container and stopped the "no hits yet" label from wrapping onto two lines.
+
 ## [2.8.1] – 2026-09-28
 
 Fixes group join/leave errors.
